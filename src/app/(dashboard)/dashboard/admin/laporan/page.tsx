@@ -17,13 +17,8 @@ type LaporanType = {
   };
 };
 
-const getBaseUrl = () => {
-  if (typeof window !== "undefined" && window.location.hostname === "localhost") {
-    return "http://localhost:5000";
-  } else {
-    return "http://192.168.1.5:5000";
-  }
-};
+// 🔧 Selalu gunakan proxy Vercel
+const API_BASE = "/api";
 
 export default function LaporanAdminPage() {
   const [laporanList, setLaporanList] = useState<LaporanType[]>([]);
@@ -34,10 +29,8 @@ export default function LaporanAdminPage() {
   const getLaporanList = async () => {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     try {
-      const res = await fetch(`${getBaseUrl()}/api/laporan/admin`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const res = await fetch(`${API_BASE}/laporan/admin`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Gagal mengambil data laporan");
       const data = await res.json();
@@ -65,15 +58,12 @@ export default function LaporanAdminPage() {
     return keywordMatch && tanggalMatch;
   });
 
-  // Kelompokkan dan urutkan laporan per user (berdasarkan nama)
+  // Kelompokkan & urutkan per user
   const laporanPerUser: { [email: string]: LaporanType[] } = {};
   filteredList.forEach((lap) => {
-    if (!laporanPerUser[lap.user.email]) {
-      laporanPerUser[lap.user.email] = [];
-    }
+    if (!laporanPerUser[lap.user.email]) laporanPerUser[lap.user.email] = [];
     laporanPerUser[lap.user.email].push(lap);
   });
-
   const sortedEmails = Object.keys(laporanPerUser).sort((a, b) =>
     laporanPerUser[a][0].user.name.localeCompare(laporanPerUser[b][0].user.name)
   );
@@ -84,7 +74,9 @@ export default function LaporanAdminPage() {
       <div className="flex-1 md:ml-64 flex flex-col pt-16">
         <Navbar />
         <main className="p-4 sm:p-6 flex-1">
-          <h1 className="text-2xl font-bold mb-6 text-gray-800">Daftar Laporan Mahasiswa</h1>
+          <h1 className="text-2xl font-bold mb-6 text-gray-800">
+            Daftar Laporan Mahasiswa
+          </h1>
 
           <div className="flex flex-col sm:flex-row gap-4 mb-4">
             <input
@@ -117,7 +109,7 @@ export default function LaporanAdminPage() {
                         {laporans[0].user.name} ({email})
                       </h2>
 
-                      {/* Mobile View */}
+                      {/* Mobile */}
                       <div className="block md:hidden space-y-4">
                         {laporans.map((lap) => (
                           <div
@@ -135,7 +127,7 @@ export default function LaporanAdminPage() {
                               })}
                             </p>
                             <a
-                              href={`${getBaseUrl()}/api/laporan/download/${lap.file}`}
+                              href={`${API_BASE}/laporan/download/${lap.file}`}
                               className="text-blue-600 hover:underline font-medium mt-2 inline-block"
                               target="_blank"
                             >
@@ -145,7 +137,7 @@ export default function LaporanAdminPage() {
                         ))}
                       </div>
 
-                      {/* Desktop View */}
+                      {/* Desktop */}
                       <div className="hidden md:block overflow-x-auto mt-2">
                         <table className="w-full table-fixed text-sm text-left border text-gray-800">
                           <thead className="bg-gray-100 text-gray-900 font-semibold">
@@ -170,7 +162,7 @@ export default function LaporanAdminPage() {
                                 </td>
                                 <td className="p-3 whitespace-nowrap">
                                   <a
-                                    href={`${getBaseUrl()}/api/laporan/download/${lap.file}`}
+                                    href={`${API_BASE}/laporan/download/${lap.file}`}
                                     className="text-blue-600 hover:underline font-medium"
                                     target="_blank"
                                   >
