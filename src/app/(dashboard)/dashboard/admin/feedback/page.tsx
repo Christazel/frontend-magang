@@ -11,6 +11,9 @@ type User = {
   email: string;
 };
 
+// 🔧 konsisten pakai proxy
+const API_BASE = "/api";
+
 export default function FeedbackAdminPage() {
   const [pesertaList, setPesertaList] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState("");
@@ -21,15 +24,22 @@ export default function FeedbackAdminPage() {
   const fetchPeserta = async () => {
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch("/api/users/peserta", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const res = await fetch(`${API_BASE}/users/peserta`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
+
+      if (res.status === 401) {
+        localStorage.removeItem("token");
+        window.location.href = "/login";
+        return;
+      }
+
       const data = await res.json();
+      if (!res.ok) throw new Error(data?.msg || "Gagal mengambil peserta");
       setPesertaList(data);
     } catch (err) {
       console.error("Gagal mengambil peserta:", err);
+      setMessage("❌ Gagal mengambil daftar peserta");
     }
   };
 
@@ -40,7 +50,7 @@ export default function FeedbackAdminPage() {
 
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch("/api/feedback", {
+      const res = await fetch(`${API_BASE}/feedback`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -49,14 +59,20 @@ export default function FeedbackAdminPage() {
         body: JSON.stringify({ userId: selectedUser, feedback }),
       });
 
+      if (res.status === 401) {
+        localStorage.removeItem("token");
+        window.location.href = "/login";
+        return;
+      }
+
       const result = await res.json();
-      if (!res.ok) throw new Error(result.msg || "Gagal mengirim feedback");
+      if (!res.ok) throw new Error(result?.msg || "Gagal mengirim feedback");
 
       setMessage("✅ Feedback berhasil dikirim");
       setSelectedUser("");
       setFeedback("");
     } catch (error: any) {
-      setMessage("❌ " + error.message);
+      setMessage("❌ " + (error.message || "Gagal mengirim feedback"));
     } finally {
       setLoading(false);
     }
@@ -72,7 +88,9 @@ export default function FeedbackAdminPage() {
       <div className="flex-1 md:ml-64 flex flex-col">
         <Navbar />
         <main className="p-4 sm:p-6 flex-1">
-          <h1 className="text-2xl font-bold mb-6 text-gray-800">Kirim Feedback ke Peserta</h1>
+          <h1 className="text-2xl font-bold mb-6 text-gray-800">
+            Kirim Feedback ke Peserta
+          </h1>
 
           <form
             onSubmit={handleSubmit}
@@ -81,7 +99,9 @@ export default function FeedbackAdminPage() {
             {message && (
               <div
                 className={`mb-4 p-3 rounded text-sm ${
-                  message.startsWith("✅") ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                  message.startsWith("✅")
+                    ? "bg-green-100 text-green-700"
+                    : "bg-red-100 text-red-700"
                 }`}
               >
                 {message}
@@ -89,7 +109,9 @@ export default function FeedbackAdminPage() {
             )}
 
             <div className="mb-4">
-              <label className="block font-medium mb-1 text-gray-700">Pilih Peserta</label>
+              <label className="block font-medium mb-1 text-gray-700">
+                Pilih Peserta
+              </label>
               <select
                 value={selectedUser}
                 onChange={(e) => setSelectedUser(e.target.value)}
@@ -106,7 +128,9 @@ export default function FeedbackAdminPage() {
             </div>
 
             <div className="mb-4">
-              <label className="block font-medium mb-1 text-gray-700">Pesan Feedback</label>
+              <label className="block font-medium mb-1 text-gray-700">
+                Pesan Feedback
+              </label>
               <textarea
                 value={feedback}
                 onChange={(e) => setFeedback(e.target.value)}
