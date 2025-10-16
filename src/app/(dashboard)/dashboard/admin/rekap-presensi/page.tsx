@@ -5,8 +5,9 @@ import Sidebar from "@/components/layout/Sidebar";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "/api";
+// 🔧 Pakai proxy Vercel SELALU
+// Semua request akan menjadi: https://<domain-vercel>/api/...
+const API_BASE = "/api";
 
 interface Presensi {
   _id: string;
@@ -51,7 +52,7 @@ export default function RekapPresensiPage() {
       }
 
       setData(Array.isArray(result) ? result : []);
-    } catch (err) {
+    } catch (_err) {
       setError("Terjadi kesalahan saat mengambil data presensi.");
     } finally {
       setLoading(false);
