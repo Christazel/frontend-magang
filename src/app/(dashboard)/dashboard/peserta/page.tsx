@@ -6,9 +6,8 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { useEffect, useState } from "react";
 
-// Gunakan env bila ada: NEXT_PUBLIC_API_URL=/api
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "/api";
+// 🔧 Selalu gunakan proxy Vercel
+const API_BASE = "/api";
 
 type Presensi = {
   _id: string;
@@ -17,8 +16,6 @@ type Presensi = {
   jamKeluar?: string; // HH:mm:ss
   lokasiMasuk?: string;
   lokasiKeluar?: string;
-
-  // Untuk data lama yang masih ada keterangan
   keterangan?: "hadir" | "izin" | "sakit";
 };
 
@@ -38,9 +35,7 @@ export default function PesertaDashboard() {
       if (!token) return;
 
       const res = await fetch(`${API_BASE}/presensi/riwayat`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (res.status === 401) {
@@ -56,20 +51,15 @@ export default function PesertaDashboard() {
       }
 
       const count = { hadir: 0, sakit: 0, izin: 0 };
-
       data.forEach((item) => {
-        if (item.jamMasuk) {
-          count.hadir++;
-        } else if (item.keterangan === "izin") {
-          count.izin++;
-        } else if (item.keterangan === "sakit") {
-          count.sakit++;
-        }
+        if (item.jamMasuk) count.hadir++;
+        else if (item.keterangan === "izin") count.izin++;
+        else if (item.keterangan === "sakit") count.sakit++;
       });
 
       setStats(count);
-    } catch (err) {
-      console.error("❌ Gagal mengambil data presensi:", err);
+    } catch (_err) {
+      console.error("❌ Gagal mengambil data presensi:", _err);
       setError("Terjadi kesalahan saat mengambil data presensi.");
     } finally {
       setLoading(false);
@@ -112,12 +102,7 @@ export default function PesertaDashboard() {
             {/* Statistik Presensi */}
             {!loading && !error && (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <StatCard
-                  title="Jumlah Hadir"
-                  value={stats.hadir}
-                  total={TOTAL_HARI}
-                  color="blue"
-                />
+                <StatCard title="Jumlah Hadir" value={stats.hadir} total={TOTAL_HARI} color="blue" />
               </div>
             )}
           </div>
@@ -141,23 +126,14 @@ function StatCard({
 }) {
   const persen = Math.round((value / total) * 100);
   const colorClass =
-    color === "blue"
-      ? "bg-blue-600"
-      : color === "yellow"
-      ? "bg-yellow-500"
-      : "bg-red-500";
+    color === "blue" ? "bg-blue-600" : color === "yellow" ? "bg-yellow-500" : "bg-red-500";
 
   return (
     <div className="bg-white p-5 rounded-lg shadow-md">
       <h2 className="text-sm font-medium text-gray-600">{title}</h2>
-      <p className={`text-3xl font-bold mt-1 ${colorClass} bg-clip-text text-transparent`}>
-        {value}
-      </p>
+      <p className={`text-3xl font-bold mt-1 ${colorClass} bg-clip-text text-transparent`}>{value}</p>
       <div className="w-full bg-gray-200 rounded-full h-3 mt-3">
-        <div
-          className={`${colorClass} h-3 rounded-full`}
-          style={{ width: `${persen}%` }}
-        />
+        <div className={`${colorClass} h-3 rounded-full`} style={{ width: `${persen}%` }} />
       </div>
       <p className="text-xs text-gray-500 mt-2">
         {persen}% dari {total} hari
