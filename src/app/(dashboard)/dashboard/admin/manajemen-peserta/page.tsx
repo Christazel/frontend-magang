@@ -6,8 +6,8 @@ import Sidebar from "@/components/layout/Sidebar";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "/api";
+// 🔧 Selalu gunakan proxy Vercel
+const API_BASE = "/api";
 
 interface Peserta {
   _id: string;
@@ -42,15 +42,15 @@ export default function ManajemenPesertaPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        setError(data.msg || "Gagal mengambil data peserta");
+        setError(data?.msg || "Gagal mengambil data peserta");
         setLoading(false);
         return;
       }
 
       setPeserta(data);
       setFilteredPeserta(data);
-    } catch (err) {
-      console.error("❌ fetchPeserta error:", err);
+    } catch (_err) {
+      console.error("❌ fetchPeserta error:", _err);
       setError("Terjadi kesalahan saat mengambil data peserta.");
     } finally {
       setLoading(false);
@@ -61,7 +61,7 @@ export default function ManajemenPesertaPage() {
     fetchPeserta();
   }, []);
 
-  // 🔍 Filter peserta berdasarkan nama/email
+  // 🔍 Filter & Sort
   useEffect(() => {
     let filtered = peserta.filter(
       (p) =>
@@ -69,7 +69,6 @@ export default function ManajemenPesertaPage() {
         p.email.toLowerCase().includes(search.toLowerCase())
     );
 
-    // 🔽 Sort data
     filtered = [...filtered].sort((a, b) => {
       let valA: string | number = a[sortBy];
       let valB: string | number = b[sortBy];
