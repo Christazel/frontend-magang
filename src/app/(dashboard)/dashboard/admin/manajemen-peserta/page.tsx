@@ -30,7 +30,7 @@ export default function ManajemenPesertaPage() {
   const [sortBy, setSortBy] = useState<SortBy>("name");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
 
-  // Debounce input pencarian agar tidak lag di device low-end
+  // Debounce input pencarian (ringan di device low-end)
   const debounceRef = useRef<number | null>(null);
   useEffect(() => {
     if (debounceRef.current) window.clearTimeout(debounceRef.current);
@@ -47,7 +47,8 @@ export default function ManajemenPesertaPage() {
       setLoading(true);
       setError("");
 
-      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      const token =
+        typeof window !== "undefined" ? localStorage.getItem("token") : null;
       if (!token) {
         setError("Token tidak ditemukan, silakan login ulang.");
         setLoading(false);
@@ -56,7 +57,6 @@ export default function ManajemenPesertaPage() {
 
       const res = await fetch(`${API_BASE}/users/admin/peserta`, {
         headers: { Authorization: `Bearer ${token}` },
-        // agar caching per halaman lebih aman di Next
         cache: "no-store",
       });
 
@@ -88,8 +88,7 @@ export default function ManajemenPesertaPage() {
     let list = peserta.filter((p) => {
       if (!q) return true;
       return (
-        p.name?.toLowerCase().includes(q) ||
-        p.email?.toLowerCase().includes(q)
+        p.name?.toLowerCase().includes(q) || p.email?.toLowerCase().includes(q)
       );
     });
 
@@ -110,7 +109,7 @@ export default function ManajemenPesertaPage() {
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      {/* Sidebar: tetap ada, pada mobile biarkan bisa di-scroll halaman utama */}
+      {/* Sidebar */}
       <Sidebar />
 
       {/* Konten utama */}
@@ -153,20 +152,36 @@ export default function ManajemenPesertaPage() {
             {!loading && !error && (
               <div className="bg-white p-4 sm:p-6 rounded-xl shadow">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 items-start md:items-center">
+                  {/* Input cari – warna kontras */}
                   <input
                     type="text"
                     placeholder="Cari nama atau email…"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="w-full p-2.5 border rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="
+                      w-full p-2.5 rounded-lg shadow-sm
+                      bg-white text-gray-800 placeholder-gray-400
+                      border border-gray-300
+                      focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                      hover:border-gray-400
+                      dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700 dark:placeholder-gray-500
+                    "
                     aria-label="Cari peserta"
                   />
 
+                  {/* Selects – warna kontras */}
                   <div className="grid grid-cols-2 gap-3">
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value as SortBy)}
-                      className="p-2.5 border rounded-lg"
+                      className="
+                        p-2.5 rounded-lg shadow-sm
+                        bg-white text-gray-800
+                        border border-gray-300
+                        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                        hover:border-gray-400
+                        dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700
+                      "
                       aria-label="Urutkan berdasarkan"
                     >
                       <option value="name">Nama</option>
@@ -176,8 +191,17 @@ export default function ManajemenPesertaPage() {
 
                     <select
                       value={sortOrder}
-                      onChange={(e) => setSortOrder(e.target.value as SortOrder)}
-                      className="p-2.5 border rounded-lg"
+                      onChange={(e) =>
+                        setSortOrder(e.target.value as SortOrder)
+                      }
+                      className="
+                        p-2.5 rounded-lg shadow-sm
+                        bg-white text-gray-800
+                        border border-gray-300
+                        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                        hover:border-gray-400
+                        dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700
+                      "
                       aria-label="Arah pengurutan"
                     >
                       <option value="asc">Naik (Asc)</option>
@@ -208,10 +232,16 @@ export default function ManajemenPesertaPage() {
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <p className="font-semibold text-gray-900 truncate" title={p.name}>
+                          <p
+                            className="font-semibold text-gray-900 truncate"
+                            title={p.name}
+                          >
                             {p.name}
                           </p>
-                          <p className="text-sm text-gray-600 truncate" title={p.email}>
+                          <p
+                            className="text-sm text-gray-600 truncate"
+                            title={p.email}
+                          >
                             {p.email}
                           </p>
                         </div>
@@ -239,10 +269,16 @@ export default function ManajemenPesertaPage() {
                         <th scope="col" className="px-4 py-3 font-medium">
                           Email
                         </th>
-                        <th scope="col" className="px-4 py-3 text-center font-medium">
+                        <th
+                          scope="col"
+                          className="px-4 py-3 text-center font-medium"
+                        >
                           Jumlah Hadir
                         </th>
-                        <th scope="col" className="px-4 py-3 text-center font-medium">
+                        <th
+                          scope="col"
+                          className="px-4 py-3 text-center font-medium"
+                        >
                           Jumlah Tugas
                         </th>
                       </tr>
@@ -251,12 +287,18 @@ export default function ManajemenPesertaPage() {
                       {filteredPeserta.map((p) => (
                         <tr key={p._id} className="border-t hover:bg-gray-50">
                           <td className="px-4 py-3 font-medium">
-                            <span className="block max-w-[280px] lg:max-w-none truncate" title={p.name}>
+                            <span
+                              className="block max-w-[280px] lg:max-w-none truncate"
+                              title={p.name}
+                            >
                               {p.name}
                             </span>
                           </td>
                           <td className="px-4 py-3">
-                            <span className="block max-w-[360px] xl:max-w-none truncate" title={p.email}>
+                            <span
+                              className="block max-w-[360px] xl:max-w-none truncate"
+                              title={p.email}
+                            >
                               {p.email}
                             </span>
                           </td>
