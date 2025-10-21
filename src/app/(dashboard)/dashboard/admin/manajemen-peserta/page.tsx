@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import Sidebar from "@/components/layout/Sidebar";
 import Navbar from "@/components/layout/Navbar";
@@ -17,38 +17,19 @@ interface Peserta {
   tugas: number;
 }
 
-type SortBy = "hadir" | "tugas" | "name";
-type SortOrder = "asc" | "desc";
-
 export default function ManajemenPesertaPage() {
   const { user } = useAuth();
   const [peserta, setPeserta] = useState<Peserta[]>([]);
+  const [filteredPeserta, setFilteredPeserta] = useState<Peserta[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [sortBy, setSortBy] = useState<SortBy>("name");
-  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
-
-  // Debounce input pencarian (ringan di device low-end)
-  const debounceRef = useRef<number | null>(null);
-  useEffect(() => {
-    if (debounceRef.current) window.clearTimeout(debounceRef.current);
-    debounceRef.current = window.setTimeout(() => {
-      setDebouncedSearch(search.trim());
-    }, 250);
-    return () => {
-      if (debounceRef.current) window.clearTimeout(debounceRef.current);
-    };
-  }, [search]);
+  const [sortBy, setSortBy] = useState<"hadir" | "tugas" | "name">("name");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   const fetchPeserta = async () => {
     try {
-      setLoading(true);
-      setError("");
-
-      const token =
-        typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      const token = localStorage.getItem("token");
       if (!token) {
         setError("Token tidak ditemukan, silakan login ulang.");
         setLoading(false);
@@ -57,19 +38,19 @@ export default function ManajemenPesertaPage() {
 
       const res = await fetch(`${API_BASE}/users/admin/peserta`, {
         headers: { Authorization: `Bearer ${token}` },
-        cache: "no-store",
       });
 
       const data = await res.json();
       if (!res.ok) {
-        setError(data?.msg || "Gagal mengambil data peserta.");
+        setError(data?.msg || "Gagal mengambil data peserta");
         setLoading(false);
         return;
       }
 
-      setPeserta(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error("❌ fetchPeserta error:", err);
+      setPeserta(data);
+      setFilteredPeserta(data);
+    } catch (_err) {
+      console.error("❌ fetchPeserta error:", _err);
       setError("Terjadi kesalahan saat mengambil data peserta.");
     } finally {
       setLoading(false);
@@ -78,21 +59,17 @@ export default function ManajemenPesertaPage() {
 
   useEffect(() => {
     fetchPeserta();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 🔍 Filter & Sort (memoized)
-  const filteredPeserta = useMemo(() => {
-    const q = debouncedSearch.toLowerCase();
+  // 🔍 Filter & Sort
+  useEffect(() => {
+    let filtered = peserta.filter(
+      (p) =>
+        p.name.toLowerCase().includes(search.toLowerCase()) ||
+        p.email.toLowerCase().includes(search.toLowerCase())
+    );
 
-    let list = peserta.filter((p) => {
-      if (!q) return true;
-      return (
-        p.name?.toLowerCase().includes(q) || p.email?.toLowerCase().includes(q)
-      );
-    });
-
-    list.sort((a, b) => {
+    filtered = [...filtered].sort((a, b) => {
       let valA: string | number = a[sortBy];
       let valB: string | number = b[sortBy];
 
@@ -104,211 +81,98 @@ export default function ManajemenPesertaPage() {
       return 0;
     });
 
-    return list;
-  }, [peserta, debouncedSearch, sortBy, sortOrder]);
+    setFilteredPeserta(filtered);
+  }, [search, sortBy, sortOrder, peserta]);
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      {/* Sidebar */}
       <Sidebar />
-
-      {/* Konten utama */}
       <div className="flex-1 md:ml-64 flex flex-col">
         <Navbar />
-
-        <main className="flex-1 mt-14 px-3 sm:px-4 lg:px-8 py-6">
-          <div className="mx-auto w-full max-w-7xl space-y-6">
+        <main className="flex-1 mt-14 px-4 sm:px-6 lg:px-10 py-8">
+          <div className="max-w-7xl mx-auto space-y-6">
             {/* Welcome Box */}
-            <div className="bg-white p-4 sm:p-6 md:p-8 rounded-xl shadow">
-              <h1 className="text-lg sm:text-xl font-semibold text-gray-900">
+            <div className="bg-white p-4 sm:p-6 md:p-8 rounded-lg shadow-md">
+              <h1 className="text-xl font-bold text-gray-800">
                 Manajemen Peserta
               </h1>
-              <p className="text-gray-600 mt-1 text-sm sm:text-base">
+              <p className="text-gray-600 mt-1">
                 Monitoring kehadiran & tugas peserta
               </p>
             </div>
 
             {/* Error / Loading */}
             {error && (
-              <div
-                role="alert"
-                className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg"
-              >
+              <div className="bg-red-100 border border-red-200 text-red-700 px-4 py-3 rounded">
                 {error}
               </div>
             )}
-
             {loading && (
-              <div className="bg-white p-6 rounded-xl shadow text-gray-600">
-                <div className="animate-pulse space-y-3">
-                  <div className="h-4 bg-gray-200 rounded w-1/3" />
-                  <div className="h-4 bg-gray-200 rounded w-1/2" />
-                  <div className="h-4 bg-gray-200 rounded w-2/3" />
-                </div>
+              <div className="bg-white p-6 rounded-lg shadow text-gray-600">
+                Memuat data peserta...
               </div>
             )}
 
             {/* Filter & Sort */}
             {!loading && !error && (
-              <div className="bg-white p-4 sm:p-6 rounded-xl shadow">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 items-start md:items-center">
-                  {/* Input cari – warna kontras */}
+              <div className="bg-white p-6 rounded-lg shadow-md">
+                <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-3">
                   <input
                     type="text"
-                    placeholder="Cari nama atau email…"
+                    placeholder="Cari nama atau email..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="
-                      w-full p-2.5 rounded-lg shadow-sm
-                      bg-white text-gray-800 placeholder-gray-400
-                      border border-gray-300
-                      focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                      hover:border-gray-400
-                      dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700 dark:placeholder-gray-500
-                    "
-                    aria-label="Cari peserta"
+                    className="w-full md:w-1/3 p-2 border border-gray-300 rounded-md text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
 
-                  {/* Selects – warna kontras */}
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="flex gap-2 w-full md:w-auto">
                     <select
                       value={sortBy}
-                      onChange={(e) => setSortBy(e.target.value as SortBy)}
-                      className="
-                        p-2.5 rounded-lg shadow-sm
-                        bg-white text-gray-800
-                        border border-gray-300
-                        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                        hover:border-gray-400
-                        dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700
-                      "
-                      aria-label="Urutkan berdasarkan"
+                      onChange={(e) => setSortBy(e.target.value as any)}
+                      className="p-2 border border-gray-300 rounded-md text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="name">Nama</option>
                       <option value="hadir">Jumlah Hadir</option>
                       <option value="tugas">Jumlah Tugas</option>
                     </select>
-
                     <select
                       value={sortOrder}
-                      onChange={(e) =>
-                        setSortOrder(e.target.value as SortOrder)
-                      }
-                      className="
-                        p-2.5 rounded-lg shadow-sm
-                        bg-white text-gray-800
-                        border border-gray-300
-                        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                        hover:border-gray-400
-                        dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700
-                      "
-                      aria-label="Arah pengurutan"
+                      onChange={(e) => setSortOrder(e.target.value as any)}
+                      className="p-2 border border-gray-300 rounded-md text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="asc">Naik (Asc)</option>
                       <option value="desc">Turun (Desc)</option>
                     </select>
                   </div>
-
-                  {/* Ringkasan jumlah (sembunyikan di layar kecil) */}
-                  <div className="hidden md:flex justify-end">
-                    <span className="text-sm text-gray-500">
-                      Total: <b>{filteredPeserta.length}</b> peserta
-                    </span>
-                  </div>
                 </div>
 
-                {/* Mobile list (kartu) */}
-                <div className="mt-4 grid sm:hidden gap-3">
-                  {filteredPeserta.length === 0 && (
-                    <p className="text-center text-gray-500 py-4">
-                      Tidak ada peserta ditemukan.
-                    </p>
-                  )}
-
-                  {filteredPeserta.map((p) => (
-                    <div
-                      key={p._id}
-                      className="rounded-lg border bg-white p-4 shadow-sm"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p
-                            className="font-semibold text-gray-900 truncate"
-                            title={p.name}
-                          >
-                            {p.name}
-                          </p>
-                          <p
-                            className="text-sm text-gray-600 truncate"
-                            title={p.email}
-                          >
-                            {p.email}
-                          </p>
-                        </div>
-                        <div className="flex gap-2 shrink-0">
-                          <span className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-md">
-                            Hadir: {p.hadir}
-                          </span>
-                          <span className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-md">
-                            Tugas: {p.tugas}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Table (md ke atas) */}
-                <div className="mt-4 overflow-x-auto hidden md:block">
-                  <table className="min-w-full text-sm text-left text-gray-700">
-                    <thead className="bg-gray-50 text-gray-900">
+                {/* Tabel */}
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-sm text-left text-gray-600">
+                    <thead className="bg-gray-100 text-gray-800 text-sm">
                       <tr>
-                        <th scope="col" className="px-4 py-3 font-medium">
-                          Nama
-                        </th>
-                        <th scope="col" className="px-4 py-3 font-medium">
-                          Email
-                        </th>
-                        <th
-                          scope="col"
-                          className="px-4 py-3 text-center font-medium"
-                        >
-                          Jumlah Hadir
-                        </th>
-                        <th
-                          scope="col"
-                          className="px-4 py-3 text-center font-medium"
-                        >
-                          Jumlah Tugas
-                        </th>
+                        <th className="px-4 py-3">Nama</th>
+                        <th className="px-4 py-3">Email</th>
+                        <th className="px-4 py-3 text-center">Jumlah Hadir</th>
+                        <th className="px-4 py-3 text-center">Jumlah Tugas</th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white">
+                    <tbody>
                       {filteredPeserta.map((p) => (
                         <tr key={p._id} className="border-t hover:bg-gray-50">
-                          <td className="px-4 py-3 font-medium">
-                            <span
-                              className="block max-w-[280px] lg:max-w-none truncate"
-                              title={p.name}
-                            >
-                              {p.name}
-                            </span>
+                          <td className="px-4 py-3 font-medium text-gray-800">
+                            {p.name}
                           </td>
-                          <td className="px-4 py-3">
-                            <span
-                              className="block max-w-[360px] xl:max-w-none truncate"
-                              title={p.email}
-                            >
-                              {p.email}
-                            </span>
+                          <td className="px-4 py-3 text-gray-800">
+                            {p.email}
                           </td>
                           <td className="px-4 py-3 text-center">
-                            <span className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-md">
+                            <span className="px-2 py-1 text-sm bg-blue-100 text-blue-700 rounded-md">
                               {p.hadir}
                             </span>
                           </td>
                           <td className="px-4 py-3 text-center">
-                            <span className="inline-block px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-md">
+                            <span className="px-2 py-1 text-sm bg-purple-100 text-purple-700 rounded-md">
                               {p.tugas}
                             </span>
                           </td>
@@ -316,7 +180,6 @@ export default function ManajemenPesertaPage() {
                       ))}
                     </tbody>
                   </table>
-
                   {filteredPeserta.length === 0 && (
                     <p className="text-center text-gray-500 mt-4">
                       Tidak ada peserta ditemukan.
@@ -327,7 +190,6 @@ export default function ManajemenPesertaPage() {
             )}
           </div>
         </main>
-
         <Footer />
       </div>
     </div>
