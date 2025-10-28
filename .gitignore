@@ -2,3 +2,4 @@ node_modules
 next.config.ts
 .env.local
 .env.development.local
+.next
