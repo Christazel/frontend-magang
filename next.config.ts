@@ -5,7 +5,7 @@ import type { NextConfig } from "next";
 // - Di local: http://localhost:5000 (misal backend jalan di 5000)
 // - Di Vercel: pakai NEXT_PUBLIC_API_URL = https://backend-magang.vercel.app
 const ORIGIN = (
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000"
+  process.env.NEXT_PUBLIC_API_URL ?? "https://backend-magang.vercel.app"
 ).replace(/\/$/, "");
 
 const nextConfig: NextConfig = {
