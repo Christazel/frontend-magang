@@ -100,13 +100,13 @@ export default function PresensiPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 px-4 py-10 items-center">
-      <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-100">
+    <div className="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 px-3 py-6 sm:px-4 sm:py-8 md:px-6 lg:px-8">
+      <div className="bg-white p-4 sm:p-6 md:p-8 rounded-2xl shadow-2xl w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl border border-gray-100">
         {/* Header dengan Icon */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full mb-4 shadow-lg">
+        <div className="text-center mb-6 sm:mb-8">
+          <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full mb-3 sm:mb-4 shadow-lg">
             <svg
-              className="w-8 h-8 text-white"
+              className="w-7 h-7 sm:w-8 sm:h-8 text-white"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -119,20 +119,20 @@ export default function PresensiPage() {
               />
             </svg>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 leading-snug">
             Presensi Hari Ini
           </h2>
-          <p className="text-sm text-gray-500 mt-2">
+          <p className="text-xs sm:text-sm text-gray-500 mt-1 sm:mt-2 px-4 sm:px-0">
             Catat kehadiran Anda dengan mudah
           </p>
         </div>
 
         {/* Alert Messages dengan animasi */}
         {success && (
-          <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 rounded-lg animate-fadeIn">
-            <div className="flex items-center">
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-green-50 border-l-4 border-green-500 rounded-lg animate-fadeIn">
+            <div className="flex items-start">
               <svg
-                className="w-5 h-5 text-green-500 mr-3"
+                className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 mr-2 sm:mr-3 mt-0.5"
                 fill="currentColor"
                 viewBox="0 0 20 20"
               >
@@ -142,16 +142,18 @@ export default function PresensiPage() {
                   clipRule="evenodd"
                 />
               </svg>
-              <p className="text-green-700 font-medium">{success}</p>
+              <p className="text-xs sm:text-sm text-green-700 font-medium">
+                {success}
+              </p>
             </div>
           </div>
         )}
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg animate-fadeIn">
-            <div className="flex items-center">
+          <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-red-50 border-l-4 border-red-500 rounded-lg animate-fadeIn">
+            <div className="flex items-start">
               <svg
-                className="w-5 h-5 text-red-500 mr-3"
+                className="w-4 h-4 sm:w-5 sm:h-5 text-red-500 mr-2 sm:mr-3 mt-0.5"
                 fill="currentColor"
                 viewBox="0 0 20 20"
               >
@@ -161,18 +163,20 @@ export default function PresensiPage() {
                   clipRule="evenodd"
                 />
               </svg>
-              <p className="text-red-700 font-medium">{error}</p>
+              <p className="text-xs sm:text-sm text-red-700 font-medium">
+                {error}
+              </p>
             </div>
           </div>
         )}
 
         {/* Info Card dengan design lebih menarik */}
-        <div className="mb-6 bg-gradient-to-br from-gray-50 to-gray-100 p-5 rounded-xl border border-gray-200 shadow-sm">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between py-2 border-b border-gray-200">
-              <span className="text-gray-600 font-medium flex items-center">
+        <div className="mb-5 sm:mb-6 bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-5 rounded-xl border border-gray-200 shadow-sm">
+          <div className="space-y-2.5 sm:space-y-3">
+            <div className="flex items-start justify-between gap-3 py-2 border-b border-gray-200">
+              <span className="text-gray-600 font-medium flex items-center text-xs sm:text-sm md:text-base">
                 <svg
-                  className="w-5 h-5 mr-2 text-blue-500"
+                  className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2 text-blue-500 flex-shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -186,7 +190,7 @@ export default function PresensiPage() {
                 </svg>
                 Tanggal
               </span>
-              <span className="text-gray-800 font-semibold">
+              <span className="text-gray-800 font-semibold text-xs sm:text-sm md:text-base text-right break-words max-w-[60%] sm:max-w-[70%]">
                 {new Date().toLocaleDateString("id-ID", {
                   weekday: "long",
                   year: "numeric",
@@ -196,10 +200,10 @@ export default function PresensiPage() {
               </span>
             </div>
 
-            <div className="flex items-center justify-between py-2 border-b border-gray-200">
-              <span className="text-gray-600 font-medium flex items-center">
+            <div className="flex items-center justify-between gap-3 py-2 border-b border-gray-200">
+              <span className="text-gray-600 font-medium flex items-center text-xs sm:text-sm md:text-base">
                 <svg
-                  className="w-5 h-5 mr-2 text-green-500"
+                  className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2 text-green-500 flex-shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -214,7 +218,7 @@ export default function PresensiPage() {
                 Jam Masuk
               </span>
               <span
-                className={`font-bold text-lg ${
+                className={`font-bold text-sm sm:text-base md:text-lg ${
                   presensiHariIni?.jamMasuk
                     ? "text-green-600"
                     : "text-gray-400"
@@ -224,10 +228,10 @@ export default function PresensiPage() {
               </span>
             </div>
 
-            <div className="flex items-center justify-between py-2">
-              <span className="text-gray-600 font-medium flex items-center">
+            <div className="flex items-center justify-between gap-3 py-2">
+              <span className="text-gray-600 font-medium flex items-center text-xs sm:text-sm md:text-base">
                 <svg
-                  className="w-5 h-5 mr-2 text-red-500"
+                  className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2 text-red-500 flex-shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -242,7 +246,7 @@ export default function PresensiPage() {
                 Jam Keluar
               </span>
               <span
-                className={`font-bold text-lg ${
+                className={`font-bold text-sm sm:text-base md:text-lg ${
                   presensiHariIni?.jamKeluar
                     ? "text-red-600"
                     : "text-gray-400"
@@ -255,17 +259,17 @@ export default function PresensiPage() {
         </div>
 
         {/* Tombol Presensi dengan design modern */}
-        <div className="flex flex-col gap-3 mb-4">
+        <div className="flex flex-col gap-2.5 sm:gap-3 mb-4 sm:mb-5">
           {!presensiHariIni?.jamMasuk && (
             <button
               onClick={() => handleAbsen("masuk")}
               disabled={loading}
-              className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3.5 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center"
+              className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 sm:py-3.5 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center text-sm sm:text-base"
             >
               {loading ? (
                 <>
                   <svg
-                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                    className="animate-spin -ml-1 mr-2 h-4 w-4 sm:h-5 sm:w-5 text-white"
                     fill="none"
                     viewBox="0 0 24 24"
                   >
@@ -288,7 +292,7 @@ export default function PresensiPage() {
               ) : (
                 <>
                   <svg
-                    className="w-5 h-5 mr-2"
+                    className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -310,12 +314,12 @@ export default function PresensiPage() {
             <button
               onClick={() => handleAbsen("keluar")}
               disabled={loading}
-              className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-3.5 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center"
+              className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-3 sm:py-3.5 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center text-sm sm:text-base"
             >
               {loading ? (
                 <>
                   <svg
-                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                    className="animate-spin -ml-1 mr-2 h-4 w-4 sm:h-5 sm:w-5 text-white"
                     fill="none"
                     viewBox="0 0 24 24"
                   >
@@ -338,7 +342,7 @@ export default function PresensiPage() {
               ) : (
                 <>
                   <svg
-                    className="w-5 h-5 mr-2"
+                    className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -357,9 +361,9 @@ export default function PresensiPage() {
           )}
 
           {presensiHariIni?.jamMasuk && presensiHariIni?.jamKeluar && (
-            <div className="w-full bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 text-blue-700 font-semibold py-3.5 rounded-xl flex items-center justify-center">
+            <div className="w-full bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 text-blue-700 font-semibold py-3 sm:py-3.5 rounded-xl flex items-center justify-center text-sm sm:text-base text-center px-2">
               <svg
-                className="w-5 h-5 mr-2"
+                className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2"
                 fill="currentColor"
                 viewBox="0 0 20 20"
               >
@@ -377,10 +381,10 @@ export default function PresensiPage() {
         <button
           type="button"
           onClick={() => router.push("/dashboard/peserta")}
-          className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 rounded-xl transition-all duration-200 flex items-center justify-center shadow-sm hover:shadow border border-gray-200"
+          className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 sm:py-3 rounded-xl transition-all duration-200 flex items-center justify-center shadow-sm hover:shadow border border-gray-200 text-sm sm:text-base"
         >
           <svg
-            className="w-5 h-5 mr-2"
+            className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
