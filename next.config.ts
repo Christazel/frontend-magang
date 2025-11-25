@@ -1,15 +1,18 @@
 // next.config.ts
 import type { NextConfig } from "next";
 
-// Hilangkan trailing slash agar tidak jadi //api
-const ORIGIN =
-  (process.env.NEXT_PUBLIC_API_URL ?? "mongodb+srv://Yohan:Kayu234@sistem.qbyhp.mongodb.net/sistem?retryWrites=true&w=majority").replace(/\/$/, "");
+// ORIGIN: base URL backend
+// - Di local: http://localhost:5000 (misal backend jalan di 5000)
+// - Di Vercel: pakai NEXT_PUBLIC_API_URL = https://backend-magang.vercel.app
+const ORIGIN = (
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000"
+).replace(/\/$/, "");
 
 const nextConfig: NextConfig = {
   // Biarkan build Vercel tidak gagal karena lint
   eslint: { ignoreDuringBuilds: true },
 
-  // Proxy semua request /api/* ke backend Railway
+  // Proxy semua request /api/* ke backend (Vercel / lokal)
   async rewrites() {
     return [
       {
