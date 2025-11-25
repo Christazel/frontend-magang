@@ -1,9 +1,15 @@
-const ORIGIN = (
-  process.env.NEXT_PUBLIC_API_URL || "https://backend-magang.vercel.app/"
-).replace(/\/$/, "");
+// next.config.ts
+import type { NextConfig } from "next";
 
-export default {
+// Hilangkan trailing slash agar tidak jadi //api
+const ORIGIN =
+  (process.env.NEXT_PUBLIC_API_URL ?? "mongodb+srv://Yohan:Kayu234@sistem.qbyhp.mongodb.net/sistem?retryWrites=true&w=majority").replace(/\/$/, "");
+
+const nextConfig: NextConfig = {
+  // Biarkan build Vercel tidak gagal karena lint
   eslint: { ignoreDuringBuilds: true },
+
+  // Proxy semua request /api/* ke backend Railway
   async rewrites() {
     return [
       {
@@ -13,3 +19,5 @@ export default {
     ];
   },
 };
+
+export default nextConfig;
