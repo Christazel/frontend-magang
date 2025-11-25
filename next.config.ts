@@ -1,5 +1,5 @@
 const ORIGIN = (
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
+  process.env.NEXT_PUBLIC_API_URL || "https://backend-magang.vercel.app/"
 ).replace(/\/$/, "");
 
 export default {
