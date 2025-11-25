@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 
 // Hilangkan trailing slash agar tidak jadi //api
 const ORIGIN =
-  (process.env.NEXT_PUBLIC_API_URL ?? "https://backend-magang.vercel.app/").replace(/\/$/, "");
+  (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000").replace(/\/$/, "");
 
 const nextConfig: NextConfig = {
   // Biarkan build Vercel tidak gagal karena lint
