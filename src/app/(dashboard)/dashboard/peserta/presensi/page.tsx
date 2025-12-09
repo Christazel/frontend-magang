@@ -62,7 +62,7 @@ export default function PresensiPage() {
     });
   };
 
-  // 🔹 Fungsi Absen
+  // 🔹 Fungsi Presensi
   const handleAbsen = async (tipe: "masuk" | "keluar") => {
     setError("");
     setSuccess("");
@@ -90,7 +90,7 @@ export default function PresensiPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.msg || "Gagal melakukan presensi");
 
-      setSuccess(`Absen ${tipe} berhasil!`);
+      setSuccess(`Presensi ${tipe} berhasil!`);
       fetchPresensiHariIni();
     } catch (err: any) {
       setError(err.message || "Terjadi kesalahan saat presensi");
@@ -224,7 +224,7 @@ export default function PresensiPage() {
                     : "text-gray-400"
                 }`}
               >
-                {presensiHariIni?.jamMasuk || "Belum Absen"}
+                {presensiHariIni?.jamMasuk || "Belum Presensi"}
               </span>
             </div>
 
@@ -252,7 +252,7 @@ export default function PresensiPage() {
                     : "text-gray-400"
                 }`}
               >
-                {presensiHariIni?.jamKeluar || "Belum Absen"}
+                {presensiHariIni?.jamKeluar || "Belum Presensi"}
               </span>
             </div>
           </div>
@@ -304,7 +304,7 @@ export default function PresensiPage() {
                       d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
                     />
                   </svg>
-                  Absen Masuk
+                  Presensi Masuk
                 </>
               )}
             </button>
@@ -354,7 +354,7 @@ export default function PresensiPage() {
                       d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                     />
                   </svg>
-                  Absen Keluar
+                  Presensi Keluar
                 </>
               )}
             </button>
