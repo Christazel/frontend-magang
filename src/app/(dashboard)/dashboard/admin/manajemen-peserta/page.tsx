@@ -17,6 +17,18 @@ interface Peserta {
   tugas: number;
 }
 
+// Konfigurasi perhitungan keaktifan
+const TOTAL_HARI = 90; // total hari magang (silakan sesuaikan)
+const TOTAL_TUGAS = 10; // jumlah tugas yang ditargetkan
+
+function hitungKeaktifan(hadir: number, tugas: number): number {
+  const hadirScore = TOTAL_HARI > 0 ? hadir / TOTAL_HARI : 0; // 0..1
+  const tugasScore = TOTAL_TUGAS > 0 ? tugas / TOTAL_TUGAS : 0; // 0..1
+  const avgScore = (hadirScore + tugasScore) / 2; // rata-rata
+  const persen = Math.round(avgScore * 100);
+  return Math.min(100, Math.max(0, persen)); // jaga tetap di 0–100
+}
+
 type SortBy = "hadir" | "tugas" | "name";
 type SortOrder = "asc" | "desc";
 
@@ -252,6 +264,9 @@ export default function ManajemenPesertaPage() {
                           <span className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-md">
                             Tugas: {p.tugas}
                           </span>
+                          <span className="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-md">
+                            Aktif: {hitungKeaktifan(p.hadir, p.tugas)}%
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -280,6 +295,12 @@ export default function ManajemenPesertaPage() {
                           className="px-4 py-3 text-center font-medium"
                         >
                           Jumlah Tugas
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-4 py-3 text-center font-medium"
+                        >
+                          Keaktifan
                         </th>
                       </tr>
                     </thead>
@@ -310,6 +331,11 @@ export default function ManajemenPesertaPage() {
                           <td className="px-4 py-3 text-center">
                             <span className="inline-block px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-md">
                               {p.tugas}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <span className="inline-block px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-md">
+                              {hitungKeaktifan(p.hadir, p.tugas)}%
                             </span>
                           </td>
                         </tr>
