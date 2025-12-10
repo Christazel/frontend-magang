@@ -120,15 +120,15 @@ export default function ManajemenPesertaPage() {
   }, [peserta, debouncedSearch, sortBy, sortOrder]);
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex min-h-screen w-full bg-gray-100 overflow-x-hidden">
       {/* Sidebar */}
       <Sidebar />
 
       {/* Konten utama */}
-      <div className="flex-1 md:ml-64 flex flex-col">
+      <div className="flex-1 md:ml-64 flex flex-col w-full">
         <Navbar />
 
-        <main className="flex-1 mt-14 px-3 sm:px-4 lg:px-8 py-6">
+        <main className="flex-1 mt-14 px-3 sm:px-4 lg:px-8 py-6 w-full">
           <div className="mx-auto w-full max-w-7xl space-y-6">
             {/* Welcome Box */}
             <div className="bg-white p-4 sm:p-6 md:p-8 rounded-xl shadow">
@@ -164,7 +164,7 @@ export default function ManajemenPesertaPage() {
             {!loading && !error && (
               <div className="bg-white p-4 sm:p-6 rounded-xl shadow">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 items-start md:items-center">
-                  {/* Input cari – hanya perkuat warna, layout TIDAK diubah */}
+                  {/* Input cari */}
                   <input
                     type="text"
                     placeholder="Cari nama atau email…"
@@ -181,7 +181,7 @@ export default function ManajemenPesertaPage() {
                     aria-label="Cari peserta"
                   />
 
-                  {/* Selects – hanya perkuat warna, layout TIDAK diubah */}
+                  {/* Selects */}
                   <div className="grid grid-cols-2 gap-3">
                     <select
                       value={sortBy}
@@ -240,7 +240,7 @@ export default function ManajemenPesertaPage() {
                   {filteredPeserta.map((p) => (
                     <div
                       key={p._id}
-                      className="rounded-lg border bg-white p-4 shadow-sm"
+                      className="rounded-lg border bg-white p-4 shadow-sm w-full"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
@@ -257,7 +257,7 @@ export default function ManajemenPesertaPage() {
                             {p.email}
                           </p>
                         </div>
-                        <div className="flex gap-2 shrink-0">
+                        <div className="flex gap-2 flex-wrap justify-end shrink-0">
                           <span className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-md">
                             Hadir: {p.hadir}
                           </span>
