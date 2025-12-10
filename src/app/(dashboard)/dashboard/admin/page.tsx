@@ -31,19 +31,49 @@ ChartJS.register(
   Title
 );
 
+// === Konfigurasi keaktifan (sama dengan manajemen peserta) ===
+const TOTAL_HARI = 90; // total hari magang (silakan sesuaikan)
+const TOTAL_TUGAS = 10; // jumlah tugas target
+
+type PesertaStats = {
+  _id: string;
+  name: string;
+  email: string;
+  hadir: number;
+  tugas: number;
+};
+
+function hitungKeaktifan(hadir: number, tugas: number): number {
+  const hadirScore = TOTAL_HARI > 0 ? hadir / TOTAL_HARI : 0; // 0..1
+  const tugasScore = TOTAL_TUGAS > 0 ? tugas / TOTAL_TUGAS : 0; // 0..1
+  const avgScore = (hadirScore + tugasScore) / 2; // rata-rata
+  const persen = Math.round(avgScore * 100);
+  return Math.min(100, Math.max(0, persen)); // jaga 0–100
+}
+
 export default function AdminDashboard() {
   const { user } = useAuth();
   const [stats, setStats] = useState({
     totalInterns: 0,
     reportsSubmitted: 0,
+    averageActivity: 0, // rata-rata keaktifan semua peserta
   });
 
   useEffect(() => {
     const fetchStats = async () => {
-      const token = localStorage.getItem("token");
+      const token = typeof window !== "undefined"
+        ? localStorage.getItem("token")
+        : null;
+
+      if (!token) {
+        console.warn("Token tidak ditemukan di dashboard admin.");
+        return;
+      }
+
       try {
-        const [internRes, reportRes] = await Promise.all([
-          fetch("/api/users/peserta", {
+        const [pesertaRes, reportRes] = await Promise.all([
+          // pakai endpoint yang sama dengan Manajemen Peserta
+          fetch("/api/users/admin/peserta", {
             headers: { Authorization: `Bearer ${token}` },
           }),
           fetch("/api/laporan/admin", {
@@ -51,17 +81,58 @@ export default function AdminDashboard() {
           }),
         ]);
 
-        if (!internRes.ok || !reportRes.ok) throw new Error("Gagal mengambil data");
+        let pesertaData: PesertaStats[] = [];
+        let reportData: any[] = [];
 
-        const internData = await internRes.json();
-        const reportData = await reportRes.json();
+        if (pesertaRes.ok) {
+          pesertaData = await pesertaRes.json();
+        } else {
+          const text = await pesertaRes.text();
+          console.error(
+            "Gagal mengambil data peserta (admin/peserta):",
+            pesertaRes.status,
+            text
+          );
+        }
+
+        if (reportRes.ok) {
+          reportData = await reportRes.json();
+        } else {
+          const text = await reportRes.text();
+          console.error(
+            "Gagal mengambil data laporan (laporan/admin):",
+            reportRes.status,
+            text
+          );
+        }
+
+        const totalInterns = Array.isArray(pesertaData)
+          ? pesertaData.length
+          : 0;
+        const reportsSubmitted = Array.isArray(reportData)
+          ? reportData.length
+          : 0;
+
+        // 🧮 hitung rata-rata keaktifan semua peserta
+        let averageActivity = 0;
+        if (totalInterns > 0 && Array.isArray(pesertaData)) {
+          const totalPersen = pesertaData.reduce((sum, p) => {
+            return (
+              sum + hitungKeaktifan(p.hadir ?? 0, p.tugas ?? 0)
+            );
+          }, 0);
+          averageActivity = Math.round(totalPersen / totalInterns);
+          averageActivity = Math.min(100, Math.max(0, averageActivity));
+        }
 
         setStats({
-          totalInterns: internData.length,
-          reportsSubmitted: Array.isArray(reportData) ? reportData.length : 0,
+          totalInterns,
+          reportsSubmitted,
+          averageActivity,
         });
       } catch (error) {
         console.error("Gagal mengambil statistik:", error);
+        // jangan lempar error, biar Next.js overlay-nya nggak muncul
       }
     };
 
@@ -77,7 +148,10 @@ export default function AdminDashboard() {
         backgroundColor: ["rgba(59, 130, 246, 0.8)", "rgba(139, 92, 246, 0.8)"],
         borderColor: ["rgba(59, 130, 246, 1)", "rgba(139, 92, 246, 1)"],
         borderWidth: 2,
-        hoverBackgroundColor: ["rgba(37, 99, 235, 0.9)", "rgba(124, 58, 237, 0.9)"],
+        hoverBackgroundColor: [
+          "rgba(37, 99, 235, 0.9)",
+          "rgba(124, 58, 237, 0.9)",
+        ],
       },
     ],
   };
@@ -91,13 +165,15 @@ export default function AdminDashboard() {
         backgroundColor: ["rgba(59, 130, 246, 0.8)", "rgba(139, 92, 246, 0.8)"],
         borderColor: ["rgba(59, 130, 246, 1)", "rgba(139, 92, 246, 1)"],
         borderWidth: 2,
-        borderRadius: 8, // ✅ FIX: ganti dari cornerRadius ke borderRadius
-        hoverBackgroundColor: ["rgba(37, 99, 235, 0.9)", "rgba(124, 58, 237, 0.9)"],
+        borderRadius: 8,
+        hoverBackgroundColor: [
+          "rgba(37, 99, 235, 0.9)",
+          "rgba(124, 58, 237, 0.9)",
+        ],
       },
     ],
   };
 
-  // ✅ options typed
   const barOptions: ChartOptions<"bar"> = {
     responsive: true,
     maintainAspectRatio: true,
@@ -138,18 +214,18 @@ export default function AdminDashboard() {
         backgroundColor: "rgba(0, 0, 0, 0.8)",
         padding: 12,
         titleFont: { size: 14, weight: "bold" },
-        bodyFont: { size: 13 }, // ✅ tambahin bodyFont biar sama dengan bar
+        bodyFont: { size: 13 },
       },
     },
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="flex min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100 overflow-x-hidden">
       <Sidebar />
-      <div className="flex-1 md:ml-64 flex flex-col">
+      <div className="flex-1 md:ml-64 flex flex-col w-full">
         <Navbar />
-        <main className="flex-1 mt-14 px-4 sm:px-6 lg:px-10 py-8">
-          <div className="max-w-7xl mx-auto space-y-8">
+        <main className="flex-1 mt-14 px-4 sm:px-6 lg:px-10 py-8 w-full">
+          <div className="max-w-7xl mx-auto w-full space-y-8">
             {/* Welcome Section */}
             <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 to-purple-600 p-8 rounded-2xl shadow-xl">
               <div className="relative z-10">
@@ -192,9 +268,7 @@ export default function AdminDashboard() {
                 title="Tingkat Keaktifan"
                 value={
                   stats.totalInterns > 0
-                    ? `${Math.round(
-                        (stats.reportsSubmitted / stats.totalInterns) * 100
-                      )}%`
+                    ? `${stats.averageActivity}%`
                     : "0%"
                 }
                 icon={<TrendingUp className="w-8 h-8" />}
