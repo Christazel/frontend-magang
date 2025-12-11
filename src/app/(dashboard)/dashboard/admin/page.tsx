@@ -58,17 +58,22 @@ export default function AdminDashboard() {
     reportsSubmitted: 0,
     averageActivity: 0, // rata-rata keaktifan semua peserta
   });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const fetchStats = async () => {
-      const token = typeof window !== "undefined"
-        ? localStorage.getItem("token")
-        : null;
+      const token =
+        typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
       if (!token) {
         console.warn("Token tidak ditemukan di dashboard admin.");
+        setLoading(false);
         return;
       }
+
+      setLoading(true);
+      setError("");
 
       try {
         const [pesertaRes, reportRes] = await Promise.all([
@@ -93,6 +98,7 @@ export default function AdminDashboard() {
             pesertaRes.status,
             text
           );
+          setError("Gagal mengambil data peserta.");
         }
 
         if (reportRes.ok) {
@@ -104,6 +110,7 @@ export default function AdminDashboard() {
             reportRes.status,
             text
           );
+          if (!error) setError("Gagal mengambil data laporan.");
         }
 
         const totalInterns = Array.isArray(pesertaData)
@@ -117,9 +124,7 @@ export default function AdminDashboard() {
         let averageActivity = 0;
         if (totalInterns > 0 && Array.isArray(pesertaData)) {
           const totalPersen = pesertaData.reduce((sum, p) => {
-            return (
-              sum + hitungKeaktifan(p.hadir ?? 0, p.tugas ?? 0)
-            );
+            return sum + hitungKeaktifan(p.hadir ?? 0, p.tugas ?? 0);
           }, 0);
           averageActivity = Math.round(totalPersen / totalInterns);
           averageActivity = Math.min(100, Math.max(0, averageActivity));
@@ -130,9 +135,11 @@ export default function AdminDashboard() {
           reportsSubmitted,
           averageActivity,
         });
-      } catch (error) {
-        console.error("Gagal mengambil statistik:", error);
-        // jangan lempar error, biar Next.js overlay-nya nggak muncul
+      } catch (err) {
+        console.error("Gagal mengambil statistik:", err);
+        setError("Terjadi kesalahan saat mengambil statistik dashboard.");
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -220,12 +227,12 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="flex min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100 overflow-x-hidden">
+    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Sidebar />
-      <div className="flex-1 md:ml-64 flex flex-col w-full">
+      <div className="flex-1 md:ml-64 flex flex-col">
         <Navbar />
-        <main className="flex-1 mt-14 px-4 sm:px-6 lg:px-10 py-8 w-full">
-          <div className="max-w-7xl mx-auto w-full space-y-8">
+        <main className="flex-1 mt-14 px-4 sm:px-6 lg:px-10 py-8">
+          <div className="max-w-7xl mx-auto space-y-8">
             {/* Welcome Section */}
             <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 to-purple-600 p-8 rounded-2xl shadow-xl">
               <div className="relative z-10">
@@ -246,57 +253,82 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Stat Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              <StatCard
-                title="Total Peserta Magang"
-                value={stats.totalInterns}
-                icon={<Users className="w-8 h-8" />}
-                gradient="from-blue-500 to-blue-600"
-                lightColor="bg-blue-50"
-                textColor="text-blue-600"
-              />
-              <StatCard
-                title="Laporan Masuk"
-                value={stats.reportsSubmitted}
-                icon={<FileText className="w-8 h-8" />}
-                gradient="from-purple-500 to-purple-600"
-                lightColor="bg-purple-50"
-                textColor="text-purple-600"
-              />
-              <StatCard
-                title="Tingkat Keaktifan"
-                value={
-                  stats.totalInterns > 0
-                    ? `${stats.averageActivity}%`
-                    : "0%"
-                }
-                icon={<TrendingUp className="w-8 h-8" />}
-                gradient="from-green-500 to-emerald-600"
-                lightColor="bg-green-50"
-                textColor="text-green-600"
-              />
-            </div>
+            {/* Error / Loading */}
+            {error && (
+              <div className="bg-red-50 border-l-4 border-red-500 text-red-700 px-6 py-4 rounded-lg shadow-sm">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">⚠️</span>
+                  <span className="font-medium">{error}</span>
+                </div>
+              </div>
+            )}
+            {loading && (
+              <div className="bg-white p-8 rounded-2xl shadow-lg">
+                <div className="flex items-center justify-center gap-3">
+                  <div className="w-5 h-5 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                  <span className="text-gray-600 font-medium">
+                    Memuat data dashboard...
+                  </span>
+                </div>
+              </div>
+            )}
 
-            {/* Chart Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
-                <h2 className="text-lg font-bold mb-4 text-gray-800">
-                  Perbandingan Data
-                </h2>
-                <div className="h-64 flex items-center justify-center">
-                  <Doughnut data={doughnutData} options={doughnutOptions} />
+            {/* Stat Cards + Chart Section */}
+            {!loading && !error && (
+              <>
+                {/* Stat Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <StatCard
+                    title="Total Peserta Magang"
+                    value={stats.totalInterns}
+                    icon={<Users className="w-8 h-8" />}
+                    gradient="from-blue-500 to-blue-600"
+                    lightColor="bg-blue-50"
+                    textColor="text-blue-600"
+                  />
+                  <StatCard
+                    title="Laporan Masuk"
+                    value={stats.reportsSubmitted}
+                    icon={<FileText className="w-8 h-8" />}
+                    gradient="from-purple-500 to-purple-600"
+                    lightColor="bg-purple-50"
+                    textColor="text-purple-600"
+                  />
+                  <StatCard
+                    title="Tingkat Keaktifan"
+                    value={
+                      stats.totalInterns > 0
+                        ? `${stats.averageActivity}%`
+                        : "0%"
+                    }
+                    icon={<TrendingUp className="w-8 h-8" />}
+                    gradient="from-green-500 to-emerald-600"
+                    lightColor="bg-green-50"
+                    textColor="text-green-600"
+                  />
                 </div>
-              </div>
-              <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
-                <h2 className="text-lg font-bold mb-4 text-gray-800">
-                  Grafik Statistik
-                </h2>
-                <div className="h-64">
-                  <Bar data={barData} options={barOptions} />
+
+                {/* Chart Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
+                    <h2 className="text-lg font-bold mb-4 text-gray-800">
+                      Perbandingan Data
+                    </h2>
+                    <div className="h-64 flex items-center justify-center">
+                      <Doughnut data={doughnutData} options={doughnutOptions} />
+                    </div>
+                  </div>
+                  <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
+                    <h2 className="text-lg font-bold mb-4 text-gray-800">
+                      Grafik Statistik
+                    </h2>
+                    <div className="h-64">
+                      <Bar data={barData} options={barOptions} />
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              </>
+            )}
           </div>
         </main>
         <Footer />
