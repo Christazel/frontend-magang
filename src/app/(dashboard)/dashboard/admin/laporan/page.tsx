@@ -172,7 +172,8 @@ export default function LaporanAdminPage() {
       <div className="flex-1 md:ml-64 flex flex-col min-w-0">
         <Navbar />
 
-        <main className="flex-1">
+        {/* ⬇️ HANYA DI SINI BERUBAH: tambahkan mt-14 agar tidak ketutup navbar */}
+        <main className="flex-1 mt-14">
           {/* HEADER BAR KHUSUS (di bawah navbar, konsisten di desktop) */}
           <div className="border-b bg-white">
             <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-4">
