@@ -64,6 +64,27 @@ function RefreshIcon({ spinning }: { spinning?: boolean }) {
   );
 }
 
+/** ✅ Ambil nama file dari header Content-Disposition (kalau ada) */
+function getFilenameFromContentDisposition(header: string | null): string | null {
+  if (!header) return null;
+
+  // contoh: attachment; filename="abc.pdf"
+  const filenameMatch = header.match(/filename="([^"]+)"/i);
+  if (filenameMatch?.[1]) return filenameMatch[1];
+
+  // contoh: attachment; filename*=UTF-8''abc%20def.pdf
+  const filenameStarMatch = header.match(/filename\*\s*=\s*UTF-8''([^;]+)/i);
+  if (filenameStarMatch?.[1]) {
+    try {
+      return decodeURIComponent(filenameStarMatch[1]);
+    } catch {
+      return filenameStarMatch[1];
+    }
+  }
+
+  return null;
+}
+
 export default function LaporanPesertaPage() {
   const [file, setFile] = useState<File | null>(null);
   const [judul, setJudul] = useState("");
@@ -242,6 +263,51 @@ export default function LaporanPesertaPage() {
     }
   };
 
+  /** ✅ FIX DOWNLOAD: pakai fetch + Authorization header, bukan <a href> */
+  const handleDownload = async (lap: LaporanType) => {
+    try {
+      if (!token) return alert("Token tidak ditemukan. Silakan login ulang.");
+
+      const res = await fetch(`/api/laporan/download/${lap.fileId}`, {
+        method: "GET",
+        headers: {
+          ...authHeaders,
+        },
+      });
+
+      if (!res.ok) {
+        return alert(`Gagal download: ${await parseErrorMessage(res)}`);
+      }
+
+      const blob = await res.blob();
+
+      const cd = res.headers.get("content-disposition");
+      const filenameFromHeader = getFilenameFromContentDisposition(cd);
+
+      // fallback nama file
+      const fallback =
+        lap.originalName ||
+        (lap.judul?.trim() ? `${lap.judul}` : "laporan") +
+          (lap.mimeType === "application/pdf" ? ".pdf" : "");
+
+      const filename = filenameFromHeader || fallback;
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      // kasih jeda biar aman sebelum revoke
+      setTimeout(() => window.URL.revokeObjectURL(url), 800);
+    } catch (err: any) {
+      console.error(err);
+      alert(`Gagal download: ${err?.message || "Unknown error"}`);
+    }
+  };
+
   useEffect(() => {
     if (token) getLaporanList();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -291,9 +357,7 @@ export default function LaporanPesertaPage() {
                 type="submit"
                 disabled={isUploading || fileTooBig}
                 className={`px-4 py-2 rounded w-full md:w-auto text-white ${
-                  isUploading || fileTooBig
-                    ? "bg-blue-400 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700"
+                  isUploading || fileTooBig ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
                 }`}
               >
                 {isUploading ? "Uploading..." : "Upload"}
@@ -314,8 +378,7 @@ export default function LaporanPesertaPage() {
 
                 {file ? (
                   <p className="mt-1">
-                    File dipilih: <b className="break-words">{file.name}</b> —{" "}
-                    <b>{fileSizeMB.toFixed(2)}MB</b>{" "}
+                    File dipilih: <b className="break-words">{file.name}</b> — <b>{fileSizeMB.toFixed(2)}MB</b>{" "}
                     {fileTooBig ? <span className="ml-1">(terlalu besar)</span> : null}
                   </p>
                 ) : (
@@ -354,15 +417,15 @@ export default function LaporanPesertaPage() {
                 {laporanList.map((lap) => (
                   <li key={lap._id} className="border rounded p-3">
                     <div className="flex flex-col gap-1">
-                      <a
-                        href={`/api/laporan/download/${lap.fileId}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 underline break-words"
+                      {/* ✅ FIX: bukan href langsung, tapi fetch pakai token */}
+                      <button
+                        type="button"
+                        onClick={() => handleDownload(lap)}
+                        className="text-left text-blue-600 underline break-words"
                         title="Download laporan"
                       >
                         {lap.judul}
-                      </a>
+                      </button>
 
                       <p className="text-sm text-gray-600">{fmtTanggal(lap.createdAt)}</p>
 
@@ -390,9 +453,7 @@ export default function LaporanPesertaPage() {
                       ) : (
                         <>
                           <p className="text-sm text-gray-700 break-words">
-                            {lap.deskripsi?.trim() ? lap.deskripsi : (
-                              <span className="text-red-500">Belum ada deskripsi.</span>
-                            )}
+                            {lap.deskripsi?.trim() ? lap.deskripsi : <span className="text-red-500">Belum ada deskripsi.</span>}
                           </p>
 
                           <div className="flex flex-wrap gap-4 text-sm mt-2">
