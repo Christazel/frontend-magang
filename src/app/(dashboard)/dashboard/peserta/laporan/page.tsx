@@ -68,11 +68,9 @@ function RefreshIcon({ spinning }: { spinning?: boolean }) {
 function getFilenameFromContentDisposition(header: string | null): string | null {
   if (!header) return null;
 
-  // contoh: attachment; filename="abc.pdf"
   const filenameMatch = header.match(/filename="([^"]+)"/i);
   if (filenameMatch?.[1]) return filenameMatch[1];
 
-  // contoh: attachment; filename*=UTF-8''abc%20def.pdf
   const filenameStarMatch = header.match(/filename\*\s*=\s*UTF-8''([^;]+)/i);
   if (filenameStarMatch?.[1]) {
     try {
@@ -270,21 +268,16 @@ export default function LaporanPesertaPage() {
 
       const res = await fetch(`/api/laporan/download/${lap.fileId}`, {
         method: "GET",
-        headers: {
-          ...authHeaders,
-        },
+        headers: { ...authHeaders },
       });
 
-      if (!res.ok) {
-        return alert(`Gagal download: ${await parseErrorMessage(res)}`);
-      }
+      if (!res.ok) return alert(`Gagal download: ${await parseErrorMessage(res)}`);
 
       const blob = await res.blob();
 
       const cd = res.headers.get("content-disposition");
       const filenameFromHeader = getFilenameFromContentDisposition(cd);
 
-      // fallback nama file
       const fallback =
         lap.originalName ||
         (lap.judul?.trim() ? `${lap.judul}` : "laporan") +
@@ -299,8 +292,6 @@ export default function LaporanPesertaPage() {
       document.body.appendChild(a);
       a.click();
       a.remove();
-
-      // kasih jeda biar aman sebelum revoke
       setTimeout(() => window.URL.revokeObjectURL(url), 800);
     } catch (err: any) {
       console.error(err);
@@ -317,168 +308,198 @@ export default function LaporanPesertaPage() {
   const fileTooBig = file ? file.size > MAX_BYTES : false;
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-gray-100 overflow-x-hidden">
       <Sidebar />
-      <div className="flex-1 md:ml-64 flex flex-col">
+
+      {/* min-w-0 penting biar konten gak “maksa” melebar dan bikin ruang kosong kanan */}
+      <div className="flex-1 min-w-0 md:ml-64 flex flex-col">
         <Navbar />
 
-        <main className="p-4 sm:p-6 flex-1">
-          <h1 className="text-2xl font-bold mb-6 text-gray-800">Laporan Tugas Magang</h1>
+        <main className="flex-1 w-full p-4 sm:p-6">
+          {/* biar enak dibaca di layar besar, tapi tetap full di HP */}
+          <div className="w-full max-w-6xl mx-auto">
+            <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-gray-800">
+              Laporan Tugas Magang
+            </h1>
 
-          {/* Upload */}
-          <div className="bg-white p-4 rounded shadow mb-8">
-            <form onSubmit={handleUpload} className="flex flex-col gap-4 md:flex-row md:items-center">
-              <input
-                ref={fileInputRef}
-                type="file"
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
-                className="border p-2 rounded text-gray-800 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 w-full md:w-auto"
-                accept=".pdf,.doc,.docx,.xls,.xlsx"
-                required
-              />
+            {/* Upload */}
+            <div className="bg-white p-4 sm:p-5 rounded-lg shadow mb-6 sm:mb-8">
+              <form onSubmit={handleUpload} className="grid grid-cols-1 gap-3 md:grid-cols-12 md:items-center">
+                {/* File */}
+                <div className="md:col-span-4">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    onChange={(e) => setFile(e.target.files?.[0] || null)}
+                    className="w-full border p-2 rounded text-gray-800 file:mr-3 file:py-2 file:px-3 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx"
+                    required
+                  />
+                </div>
 
-              <input
-                type="text"
-                placeholder="Judul laporan (opsional, default: nama file)"
-                value={judul}
-                onChange={(e) => setJudul(e.target.value)}
-                className="border p-2 rounded text-gray-800 placeholder-gray-500 flex-1"
-              />
+                {/* Judul */}
+                <div className="md:col-span-3">
+                  <input
+                    type="text"
+                    placeholder="Judul (opsional)"
+                    value={judul}
+                    onChange={(e) => setJudul(e.target.value)}
+                    className="w-full border p-2 rounded text-gray-800 placeholder-gray-500"
+                  />
+                </div>
 
-              <input
-                type="text"
-                placeholder="Deskripsi laporan (opsional)"
-                value={deskripsi}
-                onChange={(e) => setDeskripsi(e.target.value)}
-                className="border p-2 rounded text-gray-800 placeholder-gray-500 flex-1"
-              />
+                {/* Deskripsi */}
+                <div className="md:col-span-3">
+                  <input
+                    type="text"
+                    placeholder="Deskripsi (opsional)"
+                    value={deskripsi}
+                    onChange={(e) => setDeskripsi(e.target.value)}
+                    className="w-full border p-2 rounded text-gray-800 placeholder-gray-500"
+                  />
+                </div>
 
-              <button
-                type="submit"
-                disabled={isUploading || fileTooBig}
-                className={`px-4 py-2 rounded w-full md:w-auto text-white ${
-                  isUploading || fileTooBig ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+                {/* Button */}
+                <div className="md:col-span-2">
+                  <button
+                    type="submit"
+                    disabled={isUploading || fileTooBig}
+                    className={`w-full px-4 py-2.5 rounded text-white font-medium ${
+                      isUploading || fileTooBig
+                        ? "bg-blue-400 cursor-not-allowed"
+                        : "bg-blue-600 hover:bg-blue-700"
+                    }`}
+                  >
+                    {isUploading ? "Uploading..." : "Upload"}
+                  </button>
+                </div>
+              </form>
+
+              {/* Notice ukuran */}
+              <div
+                className={`mt-3 rounded border p-3 text-sm ${
+                  fileTooBig ? "border-red-200 bg-red-50 text-red-700" : "border-blue-200 bg-blue-50 text-blue-700"
                 }`}
               >
-                {isUploading ? "Uploading..." : "Upload"}
-              </button>
-            </form>
-
-            {/* ✅ Notice ukuran maksimal */}
-            <div
-              className={`mt-3 rounded border p-3 text-sm ${
-                fileTooBig ? "border-red-200 bg-red-50 text-red-700" : "border-blue-200 bg-blue-50 text-blue-700"
-              }`}
-            >
-              <div className="flex flex-col gap-1">
                 <p className="font-semibold">Catatan Upload</p>
-                <p>
+                <p className="mt-1">
                   Ukuran file maksimal <b>{MAX_MB}MB</b>. Jika lebih besar, upload akan ditolak oleh server.
                 </p>
 
                 {file ? (
-                  <p className="mt-1">
-                    File dipilih: <b className="break-words">{file.name}</b> — <b>{fileSizeMB.toFixed(2)}MB</b>{" "}
+                  <p className="mt-2 break-words">
+                    File dipilih: <b>{file.name}</b> — <b>{fileSizeMB.toFixed(2)}MB</b>{" "}
                     {fileTooBig ? <span className="ml-1">(terlalu besar)</span> : null}
                   </p>
                 ) : (
-                  <p className="mt-1">Belum ada file dipilih.</p>
+                  <p className="mt-2">Belum ada file dipilih.</p>
                 )}
               </div>
             </div>
-          </div>
 
-          {/* List */}
-          <div className="bg-white p-4 rounded shadow">
-            <div className="flex items-center justify-between gap-3 mb-4">
-              <h2 className="text-lg font-semibold text-gray-800">Riwayat Laporan</h2>
+            {/* List */}
+            <div className="bg-white p-4 sm:p-5 rounded-lg shadow">
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-800">Riwayat Laporan</h2>
 
-              {/* tombol refresh ikon biru */}
-              <button
-                type="button"
-                onClick={getLaporanList}
-                disabled={loadingList}
-                title="Refresh"
-                aria-label="Refresh"
-                className={`p-2.5 rounded text-white transition focus:outline-none focus:ring-2 focus:ring-blue-300 ${
-                  loadingList ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
-                }`}
-              >
-                <RefreshIcon spinning={loadingList} />
-              </button>
+                <button
+                  type="button"
+                  onClick={getLaporanList}
+                  disabled={loadingList}
+                  title="Refresh"
+                  aria-label="Refresh"
+                  className={`p-2.5 rounded text-white transition focus:outline-none focus:ring-2 focus:ring-blue-300 ${
+                    loadingList ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+                  }`}
+                >
+                  <RefreshIcon spinning={loadingList} />
+                </button>
+              </div>
+
+              {loadingList ? (
+                <p className="text-gray-600">Memuat data...</p>
+              ) : laporanList.length === 0 ? (
+                <p className="text-gray-600">Belum ada laporan diunggah.</p>
+              ) : (
+                <ul className="space-y-3 sm:space-y-4 text-gray-800">
+                  {laporanList.map((lap) => (
+                    <li key={lap._id} className="border rounded-lg p-3 sm:p-4">
+                      <div className="flex flex-col gap-1">
+                        <button
+                          type="button"
+                          onClick={() => handleDownload(lap)}
+                          className="text-left text-blue-600 underline break-words"
+                          title="Download laporan"
+                        >
+                          {lap.judul}
+                        </button>
+
+                        <p className="text-xs sm:text-sm text-gray-600">{fmtTanggal(lap.createdAt)}</p>
+
+                        {editingId === lap._id ? (
+                          <>
+                            <input
+                              type="text"
+                              value={editDeskripsi}
+                              onChange={(e) => setEditDeskripsi(e.target.value)}
+                              className="border px-2 py-2 mt-2 rounded w-full text-gray-800"
+                            />
+
+                            <div className="mt-3 flex flex-wrap gap-2 text-sm">
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateDeskripsi(lap._id)}
+                                className="px-3 py-2 rounded bg-green-600 text-white hover:bg-green-700"
+                              >
+                                Simpan
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setEditingId(null)}
+                                className="px-3 py-2 rounded bg-gray-200 text-gray-800 hover:bg-gray-300"
+                              >
+                                Batal
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-sm text-gray-700 break-words mt-2">
+                              {lap.deskripsi?.trim() ? (
+                                lap.deskripsi
+                              ) : (
+                                <span className="text-red-500">Belum ada deskripsi.</span>
+                              )}
+                            </p>
+
+                            <div className="mt-3 flex flex-wrap gap-2 text-sm">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingId(lap._id);
+                                  setEditDeskripsi(lap.deskripsi || "");
+                                }}
+                                className="px-3 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+                              >
+                                Edit Deskripsi
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleDelete(lap._id)}
+                                className="px-3 py-2 rounded bg-red-600 text-white hover:bg-red-700"
+                              >
+                                Hapus
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
-
-            {loadingList ? (
-              <p className="text-gray-600">Memuat data...</p>
-            ) : laporanList.length === 0 ? (
-              <p className="text-gray-600">Belum ada laporan diunggah.</p>
-            ) : (
-              <ul className="space-y-4 text-gray-800">
-                {laporanList.map((lap) => (
-                  <li key={lap._id} className="border rounded p-3">
-                    <div className="flex flex-col gap-1">
-                      {/* ✅ FIX: bukan href langsung, tapi fetch pakai token */}
-                      <button
-                        type="button"
-                        onClick={() => handleDownload(lap)}
-                        className="text-left text-blue-600 underline break-words"
-                        title="Download laporan"
-                      >
-                        {lap.judul}
-                      </button>
-
-                      <p className="text-sm text-gray-600">{fmtTanggal(lap.createdAt)}</p>
-
-                      {editingId === lap._id ? (
-                        <>
-                          <input
-                            type="text"
-                            value={editDeskripsi}
-                            onChange={(e) => setEditDeskripsi(e.target.value)}
-                            className="border px-2 py-1 mt-1 rounded w-full text-gray-800"
-                          />
-                          <div className="mt-2 flex gap-3 text-sm">
-                            <button
-                              type="button"
-                              onClick={() => handleUpdateDeskripsi(lap._id)}
-                              className="text-green-600"
-                            >
-                              Simpan
-                            </button>
-                            <button type="button" onClick={() => setEditingId(null)} className="text-gray-500">
-                              Batal
-                            </button>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <p className="text-sm text-gray-700 break-words">
-                            {lap.deskripsi?.trim() ? lap.deskripsi : <span className="text-red-500">Belum ada deskripsi.</span>}
-                          </p>
-
-                          <div className="flex flex-wrap gap-4 text-sm mt-2">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setEditingId(lap._id);
-                                setEditDeskripsi(lap.deskripsi || "");
-                              }}
-                              className="text-blue-600"
-                            >
-                              Edit Deskripsi
-                            </button>
-
-                            <button type="button" onClick={() => handleDelete(lap._id)} className="text-red-600">
-                              Hapus
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
           </div>
         </main>
 
