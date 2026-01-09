@@ -7,6 +7,8 @@ import Footer from "@/components/layout/Footer";
 
 const API_BASE = "/api";
 
+type ReviewStatus = "pending" | "sesuai" | "revisi";
+
 type LaporanAdmin = {
   _id: string;
   judul: string;
@@ -17,6 +19,13 @@ type LaporanAdmin = {
     name: string;
     email: string;
   };
+
+  // ✅ tambahan fitur review
+  status?: ReviewStatus;
+  adminCatatan?: string;
+  reviewed?: boolean;
+  reviewedBy?: any;
+  reviewedAt?: string | null;
 };
 
 type SortOption = "terbaru" | "terlama";
@@ -156,6 +165,198 @@ function IconDownload({ spinning }: { spinning?: boolean }) {
   );
 }
 
+function IconCheck() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="h-4 w-4"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
+  );
+}
+
+function StatusBadge({ status }: { status?: ReviewStatus }) {
+  const s: ReviewStatus = status ?? "pending";
+  const base = "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border whitespace-nowrap";
+  const cls =
+    s === "sesuai"
+      ? "bg-green-50 text-green-700 border-green-200"
+      : s === "revisi"
+      ? "bg-amber-50 text-amber-800 border-amber-200"
+      : "bg-gray-50 text-gray-700 border-gray-200";
+
+  const label = s === "sesuai" ? "Sesuai" : s === "revisi" ? "Revisi" : "Pending";
+  return <span className={`${base} ${cls}`}>{label}</span>;
+}
+
+function ReviewModal({
+  open,
+  row,
+  status,
+  catatan,
+  saving,
+  onClose,
+  onChangeStatus,
+  onChangeCatatan,
+  onSubmit,
+}: {
+  open: boolean;
+  row: LaporanAdmin | null;
+  status: ReviewStatus;
+  catatan: string;
+  saving: boolean;
+  onClose: () => void;
+  onChangeStatus: (v: ReviewStatus) => void;
+  onChangeCatatan: (v: string) => void;
+  onSubmit: () => void;
+}) {
+  const areaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+
+    // fokus ke textarea biar cepat ngetik
+    window.setTimeout(() => areaRef.current?.focus(), 50);
+
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  if (!open || !row) return null;
+
+  return (
+    <div className="fixed inset-0 z-[9998] flex items-center justify-center px-3 sm:px-4">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+
+      <div className="relative w-full max-w-xl rounded-2xl bg-white border border-gray-200 shadow-xl">
+        <div className="p-4 sm:p-5 border-b border-gray-100">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+                Nilai Laporan Peserta
+              </h2>
+              <p className="mt-1 text-sm text-gray-600">
+                <span className="font-medium text-gray-800">{row.user?.name}</span>{" "}
+                <span className="text-gray-500">({row.user?.email})</span>
+              </p>
+              <p className="mt-1 text-sm text-gray-700 break-words">
+                <span className="text-gray-500">Judul:</span>{" "}
+                <span className="font-medium">{row.judul}</span>
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-3 py-1.5 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-700"
+              title="Tutup"
+              aria-label="Tutup"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+
+        <div className="p-4 sm:p-5 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-sm font-medium text-gray-700">Status penilaian</label>
+              <select
+                value={status}
+                onChange={(e) => onChangeStatus(e.target.value as ReviewStatus)}
+                className="
+                  mt-1 w-full p-2.5 rounded-xl shadow-sm font-medium
+                  bg-white text-gray-800
+                  border border-gray-300
+                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                  hover:border-gray-400
+                "
+              >
+                <option value="pending">Pending (belum dinilai)</option>
+                <option value="sesuai">Sesuai</option>
+                <option value="revisi">Revisi</option>
+              </select>
+
+              <div className="mt-2">
+                <StatusBadge status={status} />
+              </div>
+            </div>
+
+            <div className="sm:text-right">
+              <label className="text-sm font-medium text-gray-700 block">Tanggal upload</label>
+              <div className="mt-1 inline-flex items-center justify-end">
+                <span className="text-xs bg-gray-50 border border-gray-200 text-gray-700 px-2.5 py-1 rounded-full">
+                  {fmtTanggal(row.createdAt)}
+                </span>
+              </div>
+
+              <p className="mt-2 text-xs text-gray-500">
+                Jika <b>Revisi</b>, tulis catatan yang jelas agar peserta bisa perbaiki lalu upload ulang.
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700">Catatan admin</label>
+            <textarea
+              ref={areaRef}
+              value={catatan}
+              onChange={(e) => onChangeCatatan(e.target.value)}
+              placeholder="Contoh: Cover belum sesuai, tambahkan tanda tangan pembimbing..."
+              rows={5}
+              className="
+                mt-1 w-full p-3 rounded-xl shadow-sm
+                bg-white text-gray-800 placeholder:text-gray-500
+                border border-gray-300
+                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                hover:border-gray-400
+              "
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Catatan ini akan terlihat oleh peserta pada halaman laporan.
+            </p>
+          </div>
+        </div>
+
+        <div className="p-4 sm:p-5 border-t border-gray-100 flex flex-col sm:flex-row gap-2 sm:justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={saving}
+            className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 text-gray-800 disabled:opacity-60"
+          >
+            Batal
+          </button>
+
+          <button
+            type="button"
+            onClick={onSubmit}
+            disabled={saving}
+            className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-white transition ${
+              saving ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+            }`}
+          >
+            <IconCheck />
+            <span className="text-sm font-medium">{saving ? "Menyimpan..." : "Simpan Penilaian"}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function RekapLaporanTugasAdminPage() {
   const [data, setData] = useState<LaporanAdmin[]>([]);
   const [loading, setLoading] = useState(true);
@@ -282,13 +483,15 @@ export default function RekapLaporanTugasAdminPage() {
   };
 
   const exportCSV = () => {
-    const header = ["Nama", "Email", "Judul", "Deskripsi", "Tanggal Upload"];
+    const header = ["Nama", "Email", "Judul", "Deskripsi", "Tanggal Upload", "Status", "Catatan Admin"];
     const rows = filtered.map((x) => [
       csvEscape(x.user?.name),
       csvEscape(x.user?.email),
       csvEscape(x.judul),
       csvEscape(x.deskripsi),
       csvEscape(fmtTanggal(x.createdAt)),
+      csvEscape(x.status ?? "pending"),
+      csvEscape(x.adminCatatan ?? ""),
     ]);
 
     const csv = [header, ...rows].map((r) => r.join(",")).join("\n");
@@ -359,9 +562,98 @@ export default function RekapLaporanTugasAdminPage() {
     }
   };
 
+  // =========================
+  // ✅ REVIEW ADMIN (modal)
+  // =========================
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewRow, setReviewRow] = useState<LaporanAdmin | null>(null);
+  const [reviewStatus, setReviewStatus] = useState<ReviewStatus>("pending");
+  const [reviewCatatan, setReviewCatatan] = useState("");
+  const [savingReview, setSavingReview] = useState(false);
+
+  const openReview = (row: LaporanAdmin) => {
+    setReviewRow(row);
+    setReviewStatus((row.status ?? "pending") as ReviewStatus);
+    setReviewCatatan(row.adminCatatan ?? "");
+    setReviewOpen(true);
+  };
+
+  const closeReview = () => {
+    if (savingReview) return;
+    setReviewOpen(false);
+    setReviewRow(null);
+    setReviewStatus("pending");
+    setReviewCatatan("");
+  };
+
+  const submitReview = async () => {
+    if (!token) return showToast("error", "Token tidak tersedia. Silakan login ulang.");
+    if (!reviewRow?._id) return;
+
+    setSavingReview(true);
+    try {
+      const res = await fetch(`${API_BASE}/laporan/admin/${reviewRow._id}/review`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          status: reviewStatus,
+          adminCatatan: reviewCatatan,
+        }),
+      });
+
+      if (!res.ok) {
+        const msg = await parseErrorMessage(res);
+        showToast("error", msg);
+        return;
+      }
+
+      // server mengembalikan laporan (populated), tapi biar aman kita update minimal di state
+      const payload = await res.json().catch(() => null);
+
+      setData((prev) =>
+        prev.map((x) => {
+          if (x._id !== reviewRow._id) return x;
+
+          const next: LaporanAdmin = {
+            ...x,
+            status: reviewStatus,
+            adminCatatan: reviewCatatan,
+            reviewed: reviewStatus !== "pending",
+            reviewedBy: payload?.laporan?.reviewedBy ?? x.reviewedBy,
+            reviewedAt: payload?.laporan?.reviewedAt ?? new Date().toISOString(),
+          };
+          return next;
+        })
+      );
+
+      showToast("success", "Penilaian laporan berhasil disimpan.");
+      closeReview();
+    } catch (e) {
+      console.error(e);
+      showToast("error", "Gagal menyimpan penilaian. Coba lagi.");
+    } finally {
+      setSavingReview(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen w-full bg-gray-100 overflow-x-hidden">
       <Toast open={toastOpen} type={toastType} message={toastMsg} onClose={() => setToastOpen(false)} />
+
+      <ReviewModal
+        open={reviewOpen}
+        row={reviewRow}
+        status={reviewStatus}
+        catatan={reviewCatatan}
+        saving={savingReview}
+        onClose={closeReview}
+        onChangeStatus={setReviewStatus}
+        onChangeCatatan={setReviewCatatan}
+        onSubmit={submitReview}
+      />
 
       <Sidebar />
 
@@ -376,7 +668,7 @@ export default function RekapLaporanTugasAdminPage() {
                 <div>
                   <h1 className="text-lg sm:text-xl font-semibold text-gray-900">Rekap Laporan Tugas</h1>
                   <p className="text-gray-600 mt-1 text-sm sm:text-base">
-                    Pantau dan unduh laporan yang diunggah peserta.
+                    Pantau, nilai, dan unduh laporan yang diunggah peserta.
                   </p>
                 </div>
 
@@ -482,7 +774,7 @@ export default function RekapLaporanTugasAdminPage() {
               </p>
             </div>
 
-            {/* DATA CARD (✅ tanpa overflow-hidden biar gak nge-clip) */}
+            {/* DATA CARD */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
               {loading ? (
                 <div className="p-6">
@@ -513,6 +805,10 @@ export default function RekapLaporanTugasAdminPage() {
                                 <p className="text-xs text-gray-600 truncate" title={row.user?.email}>
                                   {row.user?.email}
                                 </p>
+
+                                <div className="mt-2">
+                                  <StatusBadge status={row.status ?? "pending"} />
+                                </div>
                               </div>
 
                               <span className="text-xs bg-gray-50 border border-gray-200 text-gray-700 px-2.5 py-1 rounded-full whitespace-nowrap">
@@ -531,38 +827,55 @@ export default function RekapLaporanTugasAdminPage() {
                                 <p className="text-sm text-gray-800 break-words">
                                   {row.deskripsi?.trim() ? row.deskripsi : <span className="text-gray-400">-</span>}
                                 </p>
+
+                                {!!row.adminCatatan?.trim() && (
+                                  <p className="mt-2 text-xs text-gray-600 break-words">
+                                    <span className="text-gray-500">Catatan admin:</span> {row.adminCatatan}
+                                  </p>
+                                )}
                               </div>
                             </div>
 
-                            <button
-                              type="button"
-                              onClick={() => handleDownload(row)}
-                              disabled={isDownloading}
-                              className={`mt-4 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-white transition ${
-                                isDownloading ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
-                              }`}
-                            >
-                              <IconDownload spinning={isDownloading} />
-                              <span className="text-sm font-medium">{isDownloading ? "Proses..." : "Download"}</span>
-                            </button>
+                            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              <button
+                                type="button"
+                                onClick={() => openReview(row)}
+                                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 text-gray-800"
+                              >
+                                Nilai
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleDownload(row)}
+                                disabled={isDownloading}
+                                className={`w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-white transition ${
+                                  isDownloading ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+                                }`}
+                              >
+                                <IconDownload spinning={isDownloading} />
+                                <span className="text-sm font-medium">{isDownloading ? "Proses..." : "Download"}</span>
+                              </button>
+                            </div>
                           </div>
                         );
                       })
                     )}
                   </div>
 
-                  {/* DESKTOP/TABLET: TABLE (✅ min-width + padding kanan biar gak kepotong) */}
+                  {/* DESKTOP/TABLET: TABLE */}
                   <div className="hidden md:block">
                     <div className="overflow-x-auto rounded-2xl">
-                      <table className="min-w-[1100px] w-full text-sm text-left text-gray-700">
+                      <table className="min-w-[1200px] w-full text-sm text-left text-gray-700">
                         <thead className="bg-gray-50 text-gray-900">
                           <tr>
                             <th className="px-4 py-3 font-semibold w-[220px]">Nama</th>
                             <th className="px-4 py-3 font-semibold w-[220px]">Email</th>
                             <th className="px-4 py-3 font-semibold min-w-[320px]">Judul</th>
                             <th className="px-4 py-3 font-semibold min-w-[320px]">Deskripsi</th>
+                            <th className="px-4 py-3 font-semibold w-[140px] whitespace-nowrap">Status</th>
                             <th className="px-4 py-3 font-semibold w-[170px] whitespace-nowrap">Tanggal</th>
-                            <th className="px-6 py-3 font-semibold w-[190px] whitespace-nowrap">Aksi</th>
+                            <th className="px-6 py-3 font-semibold w-[260px] whitespace-nowrap">Aksi</th>
                           </tr>
                         </thead>
 
@@ -594,26 +907,46 @@ export default function RekapLaporanTugasAdminPage() {
                                   <div className="max-w-[520px] break-words text-gray-700">
                                     {row.deskripsi?.trim() ? row.deskripsi : <span className="text-gray-400">-</span>}
                                   </div>
+
+                                  {!!row.adminCatatan?.trim() && (
+                                    <div className="mt-2 max-w-[520px] break-words text-xs text-gray-600">
+                                      <span className="text-gray-500">Catatan admin:</span> {row.adminCatatan}
+                                    </div>
+                                  )}
+                                </td>
+
+                                <td className="px-4 py-4">
+                                  <StatusBadge status={row.status ?? "pending"} />
                                 </td>
 
                                 <td className="px-4 py-4 whitespace-nowrap">{fmtTanggal(row.createdAt)}</td>
 
                                 <td className="px-6 py-4">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleDownload(row)}
-                                    disabled={isDownloading}
-                                    className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl text-white transition whitespace-nowrap ${
-                                      isDownloading
-                                        ? "bg-blue-400 cursor-not-allowed"
-                                        : "bg-blue-600 hover:bg-blue-700"
-                                    }`}
-                                  >
-                                    <IconDownload spinning={isDownloading} />
-                                    <span className="text-sm font-medium">
-                                      {isDownloading ? "Proses..." : "Download"}
-                                    </span>
-                                  </button>
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <button
+                                      type="button"
+                                      onClick={() => openReview(row)}
+                                      className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 text-gray-800 whitespace-nowrap"
+                                    >
+                                      Nilai
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDownload(row)}
+                                      disabled={isDownloading}
+                                      className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl text-white transition whitespace-nowrap ${
+                                        isDownloading
+                                          ? "bg-blue-400 cursor-not-allowed"
+                                          : "bg-blue-600 hover:bg-blue-700"
+                                      }`}
+                                    >
+                                      <IconDownload spinning={isDownloading} />
+                                      <span className="text-sm font-medium">
+                                        {isDownloading ? "Proses..." : "Download"}
+                                      </span>
+                                    </button>
+                                  </div>
                                 </td>
                               </tr>
                             );
@@ -621,7 +954,7 @@ export default function RekapLaporanTugasAdminPage() {
 
                           {paged.length === 0 && (
                             <tr>
-                              <td colSpan={6} className="px-4 py-10 text-center text-gray-500">
+                              <td colSpan={7} className="px-4 py-10 text-center text-gray-500">
                                 Tidak ada data laporan yang sesuai filter.
                               </td>
                             </tr>

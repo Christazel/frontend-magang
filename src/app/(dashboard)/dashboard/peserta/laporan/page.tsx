@@ -5,20 +5,28 @@ import Sidebar from "@/components/layout/Sidebar";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 
+type ReviewStatus = "pending" | "sesuai" | "revisi";
+
 type LaporanType = {
   _id: string;
   judul: string;
   deskripsi: string;
   createdAt: string;
 
-  // ✅ sesuai backend (GridFS)
-  fileId: string;
+  // ✅ dari backend bisa string / object (ObjectId)
+  fileId: any;
 
   // metadata (opsional)
   originalName?: string;
   mimeType?: string;
   gfsFilename?: string;
   size?: number;
+
+  // ✅ fitur review admin
+  status?: ReviewStatus;
+  adminCatatan?: string;
+  reviewed?: boolean;
+  reviewedAt?: string | null;
 };
 
 const MAX_MB = 4;
@@ -83,6 +91,37 @@ function getFilenameFromContentDisposition(header: string | null): string | null
   return null;
 }
 
+/** ✅ normalize ObjectId (string / object) */
+function normalizeId(id: any): string | null {
+  if (!id) return null;
+  if (typeof id === "string") return id;
+
+  if (typeof id === "object") {
+    if (typeof id._id === "string") return id._id;
+    if (typeof id.$oid === "string") return id.$oid;
+    if (typeof id.toString === "function") {
+      const s = id.toString();
+      if (s && s !== "[object Object]") return s;
+    }
+  }
+  return null;
+}
+
+function StatusBadge({ status }: { status?: ReviewStatus }) {
+  const s: ReviewStatus = status ?? "pending";
+
+  const base = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border";
+  const cls =
+    s === "sesuai"
+      ? "bg-green-50 text-green-700 border-green-200"
+      : s === "revisi"
+      ? "bg-amber-50 text-amber-800 border-amber-200"
+      : "bg-gray-50 text-gray-700 border-gray-200";
+
+  const label = s === "sesuai" ? "Sesuai" : s === "revisi" ? "Revisi" : "Pending";
+  return <span className={`${base} ${cls}`}>{label}</span>;
+}
+
 export default function LaporanPesertaPage() {
   const [file, setFile] = useState<File | null>(null);
   const [judul, setJudul] = useState("");
@@ -97,6 +136,11 @@ export default function LaporanPesertaPage() {
   const [editDeskripsi, setEditDeskripsi] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // ✅ untuk upload revisi (resubmit file)
+  const resubmitInputRef = useRef<HTMLInputElement | null>(null);
+  const [resubmitForId, setResubmitForId] = useState<string | null>(null);
+  const [isResubmitting, setIsResubmitting] = useState(false);
 
   const token = useMemo(() => {
     if (typeof window === "undefined") return null;
@@ -127,13 +171,9 @@ export default function LaporanPesertaPage() {
       const res = await fetch("/api/laporan", { headers: authHeaders });
       const data = await res.json();
 
-      if (Array.isArray(data)) {
-        setLaporanList(data);
-      } else if (Array.isArray(data?.data)) {
-        setLaporanList(data.data);
-      } else {
-        setLaporanList([]);
-      }
+      if (Array.isArray(data)) setLaporanList(data);
+      else if (Array.isArray(data?.data)) setLaporanList(data.data);
+      else setLaporanList([]);
     } catch (e) {
       console.error(e);
       setLaporanList([]);
@@ -266,7 +306,10 @@ export default function LaporanPesertaPage() {
     try {
       if (!token) return alert("Token tidak ditemukan. Silakan login ulang.");
 
-      const res = await fetch(`/api/laporan/download/${lap.fileId}`, {
+      const fileId = normalizeId(lap.fileId);
+      if (!fileId) return alert("FileId tidak ditemukan pada laporan ini.");
+
+      const res = await fetch(`/api/laporan/download/${fileId}`, {
         method: "GET",
         headers: { ...authHeaders },
       });
@@ -297,6 +340,63 @@ export default function LaporanPesertaPage() {
       console.error(err);
       alert(`Gagal download: ${err?.message || "Unknown error"}`);
     }
+  };
+
+  // ==========================
+  // ✅ RESUBMIT FILE (UPLOAD ULANG)
+  // ==========================
+  const openResubmitPicker = (laporanId: string) => {
+    setResubmitForId(laporanId);
+    // reset value biar bisa pilih file yang sama lagi
+    if (resubmitInputRef.current) resubmitInputRef.current.value = "";
+    resubmitInputRef.current?.click();
+  };
+
+  const doResubmit = async (laporanId: string, selectedFile: File) => {
+    if (!token) return alert("Token tidak ditemukan. Silakan login ulang.");
+
+    if (selectedFile.size > MAX_BYTES) {
+      return alert(
+        `Ukuran file terlalu besar. Maksimal ${MAX_MB}MB.\nUkuran file kamu: ${bytesToMB(selectedFile.size).toFixed(
+          2
+        )}MB`
+      );
+    }
+
+    setIsResubmitting(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", selectedFile);
+
+      const res = await fetch(`/api/laporan/${laporanId}/file`, {
+        method: "PUT",
+        headers: { ...authHeaders },
+        body: fd,
+      });
+
+      if (!res.ok) {
+        return alert(`Gagal upload revisi: ${await parseErrorMessage(res)}`);
+      }
+
+      alert("Upload revisi berhasil! Status laporan kembali ke pending.");
+      setResubmitForId(null);
+      await getLaporanList();
+    } catch (e: any) {
+      console.error(e);
+      alert(`Gagal upload revisi: ${e?.message || "Unknown error"}`);
+    } finally {
+      setIsResubmitting(false);
+    }
+  };
+
+  const onResubmitFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+
+    const id = resubmitForId;
+    if (!id) return;
+
+    await doResubmit(id, f);
   };
 
   useEffect(() => {
@@ -416,87 +516,138 @@ export default function LaporanPesertaPage() {
                 </button>
               </div>
 
+              {/* hidden input untuk resubmit */}
+              <input
+                ref={resubmitInputRef}
+                type="file"
+                className="hidden"
+                accept=".pdf,.doc,.docx,.xls,.xlsx"
+                onChange={onResubmitFileChange}
+              />
+
               {loadingList ? (
                 <p className="text-gray-600">Memuat data...</p>
               ) : laporanList.length === 0 ? (
                 <p className="text-gray-600">Belum ada laporan diunggah.</p>
               ) : (
                 <ul className="space-y-3 sm:space-y-4 text-gray-800">
-                  {laporanList.map((lap) => (
-                    <li key={lap._id} className="border rounded-lg p-3 sm:p-4">
-                      <div className="flex flex-col gap-1">
-                        <button
-                          type="button"
-                          onClick={() => handleDownload(lap)}
-                          className="text-left text-blue-600 underline break-words"
-                          title="Download laporan"
-                        >
-                          {lap.judul}
-                        </button>
+                  {laporanList.map((lap) => {
+                    const s: ReviewStatus = (lap.status ?? "pending") as ReviewStatus;
+                    const showCatatan = !!lap.adminCatatan?.trim();
+                    const isRevisi = s === "revisi";
+                    const resubmitBusy = isResubmitting && resubmitForId === lap._id;
 
-                        <p className="text-xs sm:text-sm text-gray-600">{fmtTanggal(lap.createdAt)}</p>
+                    return (
+                      <li key={lap._id} className="border rounded-lg p-3 sm:p-4">
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-start justify-between gap-3">
+                            <button
+                              type="button"
+                              onClick={() => handleDownload(lap)}
+                              className="text-left text-blue-600 underline break-words"
+                              title="Download laporan"
+                            >
+                              {lap.judul}
+                            </button>
 
-                        {editingId === lap._id ? (
-                          <>
-                            <input
-                              type="text"
-                              value={editDeskripsi}
-                              onChange={(e) => setEditDeskripsi(e.target.value)}
-                              className="border px-2 py-2 mt-2 rounded w-full text-gray-800"
-                            />
-
-                            <div className="mt-3 flex flex-wrap gap-2 text-sm">
-                              <button
-                                type="button"
-                                onClick={() => handleUpdateDeskripsi(lap._id)}
-                                className="px-3 py-2 rounded bg-green-600 text-white hover:bg-green-700"
-                              >
-                                Simpan
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setEditingId(null)}
-                                className="px-3 py-2 rounded bg-gray-200 text-gray-800 hover:bg-gray-300"
-                              >
-                                Batal
-                              </button>
+                            {/* ✅ Badge status (tambahin tanpa rombak layout) */}
+                            <div className="shrink-0">
+                              <StatusBadge status={s} />
                             </div>
-                          </>
-                        ) : (
-                          <>
-                            <p className="text-sm text-gray-700 break-words mt-2">
-                              {lap.deskripsi?.trim() ? (
-                                lap.deskripsi
-                              ) : (
-                                <span className="text-red-500">Belum ada deskripsi.</span>
+                          </div>
+
+                          <p className="text-xs sm:text-sm text-gray-600">{fmtTanggal(lap.createdAt)}</p>
+
+                          {/* ✅ Catatan admin tampil kalau ada */}
+                          {showCatatan && (
+                            <div className="mt-2 rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                              <p className="font-semibold">Catatan Admin</p>
+                              <p className="mt-1 break-words">{lap.adminCatatan}</p>
+                              {isRevisi && (
+                                <p className="mt-2 text-xs text-amber-800">
+                                  Status: <b>Revisi</b> — upload ulang file sesuai catatan admin.
+                                </p>
                               )}
-                            </p>
-
-                            <div className="mt-3 flex flex-wrap gap-2 text-sm">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setEditingId(lap._id);
-                                  setEditDeskripsi(lap.deskripsi || "");
-                                }}
-                                className="px-3 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
-                              >
-                                Edit Deskripsi
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => handleDelete(lap._id)}
-                                className="px-3 py-2 rounded bg-red-600 text-white hover:bg-red-700"
-                              >
-                                Hapus
-                              </button>
                             </div>
-                          </>
-                        )}
-                      </div>
-                    </li>
-                  ))}
+                          )}
+
+                          {editingId === lap._id ? (
+                            <>
+                              <input
+                                type="text"
+                                value={editDeskripsi}
+                                onChange={(e) => setEditDeskripsi(e.target.value)}
+                                className="border px-2 py-2 mt-2 rounded w-full text-gray-800"
+                              />
+
+                              <div className="mt-3 flex flex-wrap gap-2 text-sm">
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateDeskripsi(lap._id)}
+                                  className="px-3 py-2 rounded bg-green-600 text-white hover:bg-green-700"
+                                >
+                                  Simpan
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingId(null)}
+                                  className="px-3 py-2 rounded bg-gray-200 text-gray-800 hover:bg-gray-300"
+                                >
+                                  Batal
+                                </button>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <p className="text-sm text-gray-700 break-words mt-2">
+                                {lap.deskripsi?.trim() ? (
+                                  lap.deskripsi
+                                ) : (
+                                  <span className="text-red-500">Belum ada deskripsi.</span>
+                                )}
+                              </p>
+
+                              <div className="mt-3 flex flex-wrap gap-2 text-sm">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingId(lap._id);
+                                    setEditDeskripsi(lap.deskripsi || "");
+                                  }}
+                                  className="px-3 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+                                >
+                                  Edit Deskripsi
+                                </button>
+
+                                {/* ✅ Upload revisi hanya kalau status revisi */}
+                                {isRevisi && (
+                                  <button
+                                    type="button"
+                                    onClick={() => openResubmitPicker(lap._id)}
+                                    disabled={resubmitBusy}
+                                    className={`px-3 py-2 rounded text-white ${
+                                      resubmitBusy ? "bg-amber-400 cursor-not-allowed" : "bg-amber-600 hover:bg-amber-700"
+                                    }`}
+                                    title="Upload ulang file sesuai catatan admin"
+                                  >
+                                    {resubmitBusy ? "Uploading..." : "Upload Revisi"}
+                                  </button>
+                                )}
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleDelete(lap._id)}
+                                  className="px-3 py-2 rounded bg-red-600 text-white hover:bg-red-700"
+                                >
+                                  Hapus
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </div>
