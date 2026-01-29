@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter, usePathname } from "next/navigation";
 import { useState } from "react";
-import { Menu, X, LogOut, LayoutDashboard, Users, ClipboardList, MessageSquare, FileText, CheckSquare } from "lucide-react";
+import { Menu, X, LogOut } from "lucide-react";
+import { getMenuItems } from "@/constants/menu";
 
 export default function Sidebar() {
   const { user, logout } = useAuth();
@@ -14,29 +15,20 @@ export default function Sidebar() {
 
   if (!user) return null;
 
+  /**
+   * Handle user logout and redirect to login page
+   */
   const handleLogout = () => {
     logout();
     router.push("/login");
   };
 
+  /**
+   * Check if current path is active
+   */
   const isActive = (path: string) => pathname === path;
 
-  const adminMenuItems = [
-    { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-    { href: "/dashboard/admin/rekap-presensi", icon: ClipboardList, label: "Rekap Presensi" },
-    { href: "/dashboard/admin/manajemen-peserta", icon: Users, label: "Manajemen Peserta" },
-    { href: "/dashboard/admin/laporan", icon: FileText, label: "Rekap Laporan Tugas" },
-    { href: "/dashboard/admin/feedback", icon: MessageSquare, label: "Feedback & Evaluasi" },
-  ];
-
-  const pesertaMenuItems = [
-    { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-    { href: "/dashboard/peserta/presensi", icon: CheckSquare, label: "Presensi" },
-    { href: "/dashboard/peserta/laporan", icon: FileText, label: "Laporan Tugas Magang" },
-    { href: "/dashboard/peserta/feedback", icon: MessageSquare, label: "Feedback" },
-  ];
-
-  const menuItems = user.role === "admin" ? adminMenuItems : pesertaMenuItems;
+  const menuItems = getMenuItems(user.role);
 
   return (
     <>

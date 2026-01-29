@@ -7,31 +7,24 @@ import {
   useEffect,
   ReactNode,
 } from "react";
-import { jwtDecode } from "jwt-decode"; // gunakan named import
+import { jwtDecode } from "jwt-decode";
+import type { User, AuthContextType } from "@/types";
 
-type User = {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-};
-
-type AuthContextType = {
-  user: User | null;
-  login: (email: string, password: string) => Promise<User>; // ✅ return User
-  logout: () => void;
-};
-
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(
+  undefined
+);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
+  /**
+   * Initialize user from stored token on component mount
+   */
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
       try {
-        const decoded: any = jwtDecode(token);
+        const decoded = jwtDecode<User>(token);
         setUser({
           id: decoded.id,
           name: decoded.name,
@@ -39,12 +32,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           role: decoded.role,
         });
       } catch (err) {
-        console.error("Token invalid", err);
+        console.error("Token invalid:", err);
         logout();
       }
     }
   }, []);
 
+  /**
+   * Login user with email and password
+   * @param email - User email
+   * @param password - User password
+   * @returns Promise<User> - Logged in user
+   */
   const login = async (email: string, password: string): Promise<User> => {
     try {
       const res = await fetch("/api/auth/login", {
@@ -59,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!res.ok) throw new Error(data.error || "Login gagal");
 
       localStorage.setItem("token", data.token);
-      const decoded: any = jwtDecode(data.token);
+      const decoded = jwtDecode<User>(data.token);
 
       const loggedInUser: User = {
         id: decoded.id,
@@ -69,13 +68,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
 
       setUser(loggedInUser);
-      return loggedInUser; // ✅ dikembalikan
+      return loggedInUser;
     } catch (error) {
       console.error("Login error:", error);
       throw error;
     }
   };
 
+  /**
+   * Logout user and clear stored token
+   */
   const logout = () => {
     localStorage.removeItem("token");
     setUser(null);
@@ -88,6 +90,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * Custom hook to use auth context
+ * @throws Error if used outside of AuthProvider
+ * @returns AuthContextType - Auth context value
+ */
 export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
   if (!context) {
