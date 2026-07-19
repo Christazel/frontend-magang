@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -368,6 +368,10 @@ export default function RekapLaporanTugasAdminPage() {
   const [page, setPage] = useState(1);
   const rowsPerPage = 10;
 
+  // Pagination metadata dari server headers
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+
   // debounce search
   const debounceRef = useRef<number | null>(null);
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -386,24 +390,22 @@ export default function RekapLaporanTugasAdminPage() {
     toastTimerRef.current = window.setTimeout(() => setToastOpen(false), ms);
   };
 
-  const token = useMemo(() => {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem("token");
-  }, []);
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
   useEffect(() => {
     if (debounceRef.current) window.clearTimeout(debounceRef.current);
     debounceRef.current = window.setTimeout(() => {
       setDebouncedSearch(search.trim());
       setPage(1);
-    }, 250);
+    }, 400);
 
     return () => {
       if (debounceRef.current) window.clearTimeout(debounceRef.current);
     };
   }, [search]);
 
-  const fetchLaporanAdmin = async (silent = false) => {
+  // ✅ Fetch data dari server dengan search & pagination — bukan filter di browser
+  const fetchLaporanAdmin = useCallback(async (silent = false) => {
     try {
       setLoading(true);
 
@@ -413,7 +415,13 @@ export default function RekapLaporanTugasAdminPage() {
         return;
       }
 
-      const res = await fetch(`${API_BASE}/laporan/admin`, {
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: String(rowsPerPage),
+      });
+      if (debouncedSearch) params.set("search", debouncedSearch);
+
+      const res = await fetch(`${API_BASE}/laporan/admin?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
         cache: "no-store",
       });
@@ -425,6 +433,9 @@ export default function RekapLaporanTugasAdminPage() {
         return;
       }
 
+      // ✅ Ambil metadata paginasi dari response headers
+      setTotalCount(Number(res.headers.get("X-Total-Count") ?? 0));
+      setTotalPages(Number(res.headers.get("X-Total-Pages") ?? 1));
       setData(Array.isArray(json) ? json : []);
       if (!silent) showToast("success", "Data laporan berhasil dimuat.");
     } catch (e) {
@@ -434,44 +445,27 @@ export default function RekapLaporanTugasAdminPage() {
     } finally {
       setLoading(false);
     }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, page, debouncedSearch]);
 
   useEffect(() => {
     fetchLaporanAdmin(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, [fetchLaporanAdmin]);
 
-  const filtered = useMemo(() => {
-    const q = debouncedSearch.toLowerCase();
-
-    let list = data.filter((x) => {
-      const hay = `${x.user?.name ?? ""} ${x.user?.email ?? ""} ${x.judul ?? ""}`.toLowerCase();
-      const okSearch = q ? hay.includes(q) : true;
-
-      let okTanggal = true;
-      if (tanggal) {
-        const dVal = toDateInputValue(new Date(x.createdAt));
-        okTanggal = dVal === tanggal;
-      }
-
-      return okSearch && okTanggal;
-    });
-
-    list.sort((a, b) => {
+  // Client-side: filter tanggal dan sort hanya pada data yang sudah diterima dari server
+  const filtered = data
+    .filter((x) => {
+      if (!tanggal) return true;
+      const dVal = toDateInputValue(new Date(x.createdAt));
+      return dVal === tanggal;
+    })
+    .sort((a, b) => {
       const ta = new Date(a.createdAt).getTime();
       const tb = new Date(b.createdAt).getTime();
       return sortBy === "terbaru" ? tb - ta : ta - tb;
     });
 
-    return list;
-  }, [data, debouncedSearch, tanggal, sortBy]);
-
-  const total = filtered.length;
-  const totalPages = Math.max(1, Math.ceil(total / rowsPerPage));
-  const pageSafe = Math.min(page, totalPages);
-  const startIdx = (pageSafe - 1) * rowsPerPage;
-  const endIdx = startIdx + rowsPerPage;
-  const paged = filtered.slice(startIdx, endIdx);
+  const paged = filtered;
 
   const resetFilter = () => {
     setSearch("");
@@ -674,7 +668,7 @@ export default function RekapLaporanTugasAdminPage() {
 
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100 px-3 py-1.5 rounded-full">
-                    Total: {total}
+                    Total: {totalCount}
                   </span>
 
                   <button
@@ -964,20 +958,23 @@ export default function RekapLaporanTugasAdminPage() {
                     </div>
                   </div>
 
-                  {/* Pagination */}
+                  {/* Pagination — data dari server headers */}
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 py-4 border-t bg-white rounded-b-2xl">
                     <p className="text-sm text-gray-600">
-                      Menampilkan <b>{total === 0 ? 0 : startIdx + 1}</b>–<b>{Math.min(endIdx, total)}</b> dari{" "}
-                      <b>{total}</b> laporan
+                      Menampilkan <b>{totalCount === 0 ? 0 : (page - 1) * rowsPerPage + 1}</b>–<b>{Math.min(page * rowsPerPage, totalCount)}</b> dari{" "}
+                      <b>{totalCount}</b> laporan
+                      {debouncedSearch && (
+                        <span className="ml-1 text-blue-600">(pencarian: &quot;{debouncedSearch}&quot;)</span>
+                      )}
                     </p>
 
                     <div className="flex items-center justify-end gap-3">
                       <button
                         type="button"
                         onClick={() => setPage((p) => Math.max(1, p - 1))}
-                        disabled={pageSafe <= 1}
+                        disabled={page <= 1}
                         className={`px-4 py-2 rounded-xl border ${
-                          pageSafe <= 1
+                          page <= 1
                             ? "text-gray-400 border-gray-200 cursor-not-allowed"
                             : "text-gray-800 border-gray-300 hover:bg-gray-50"
                         }`}
@@ -986,15 +983,15 @@ export default function RekapLaporanTugasAdminPage() {
                       </button>
 
                       <span className="text-sm text-gray-700">
-                        {pageSafe} / {totalPages}
+                        {page} / {totalPages}
                       </span>
 
                       <button
                         type="button"
                         onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                        disabled={pageSafe >= totalPages}
+                        disabled={page >= totalPages}
                         className={`px-4 py-2 rounded-xl border ${
-                          pageSafe >= totalPages
+                          page >= totalPages
                             ? "text-gray-400 border-gray-200 cursor-not-allowed"
                             : "text-gray-800 border-gray-300 hover:bg-gray-50"
                         }`}
