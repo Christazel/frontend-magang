@@ -5,6 +5,7 @@ import {
   useContext,
   useState,
   useEffect,
+  useCallback,
   ReactNode,
 } from "react";
 import { jwtDecode } from "jwt-decode";
@@ -16,6 +17,15 @@ export const AuthContext = createContext<AuthContextType | undefined>(
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+
+  /**
+   * Logout user and clear stored token
+   */
+  const logout = useCallback(() => {
+    localStorage.removeItem("token");
+    setUser(null);
+    window.location.href = "/login";
+  }, []);
 
   /**
    * Initialize user from stored token on component mount
@@ -36,7 +46,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout();
       }
     }
-  }, []);
+  }, [logout]);
+
+  /**
+   * Global Fetch Interceptor for 401 Unauthorized
+   */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const originalFetch = window.fetch;
+    window.fetch = async (...args) => {
+      const response = await originalFetch(...args);
+
+      // Jika response 401 dan bukan dari endpoint login
+      if (response.status === 401) {
+        const url = args[0] as string;
+        if (typeof url === "string" && !url.includes("/api/auth/login")) {
+          console.warn("Session expired (401). Auto logout...");
+          logout();
+        }
+      }
+      return response;
+    };
+
+    return () => {
+      window.fetch = originalFetch;
+    };
+  }, [logout]);
 
   /**
    * Login user with email and password
@@ -75,13 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  /**
-   * Logout user and clear stored token
-   */
-  const logout = () => {
-    localStorage.removeItem("token");
-    setUser(null);
-  };
+
 
   return (
     <AuthContext.Provider value={{ user, login, logout }}>
