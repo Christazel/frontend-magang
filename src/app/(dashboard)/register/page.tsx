@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -27,7 +28,7 @@ export default function RegisterPage() {
       if (!res.ok) throw new Error("Registrasi gagal");
       router.push("/login");
     } catch (err) {
-      alert("Registrasi gagal");
+      toast.error("Registrasi gagal");
     }
   };
 
