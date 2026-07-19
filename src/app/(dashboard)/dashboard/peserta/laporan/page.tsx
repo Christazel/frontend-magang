@@ -238,7 +238,10 @@ export default function LaporanPesertaPage() {
   };
 
   const handleUpdateDeskripsi = async (id: string) => {
-    if (!token) return alert("Token tidak ditemukan. Silakan login ulang.");
+    if (!token) {
+      toast.error("Token tidak ditemukan. Silakan login ulang.");
+      return;
+    }
 
     const res = await fetch(`/api/laporan/${id}`, {
       method: "PUT",
@@ -250,28 +253,37 @@ export default function LaporanPesertaPage() {
     });
 
     if (res.ok) {
-      alert("Deskripsi berhasil diperbarui");
+      toast.success("Deskripsi berhasil diperbarui");
       setEditingId(null);
       getLaporanList();
     } else {
-      alert(`Gagal update deskripsi: ${await parseErrorMessage(res)}`);
+      toast.error(`Gagal update deskripsi: ${await parseErrorMessage(res)}`);
     }
   };
 
   /** ✅ FIX DOWNLOAD: pakai fetch + Authorization header, bukan <a href> */
   const handleDownload = async (lap: LaporanType) => {
     try {
-      if (!token) return alert("Token tidak ditemukan. Silakan login ulang.");
+      if (!token) {
+        toast.error("Token tidak ditemukan. Silakan login ulang.");
+        return;
+      }
 
       const fileId = normalizeId(lap.fileId);
-      if (!fileId) return alert("FileId tidak ditemukan pada laporan ini.");
+      if (!fileId) {
+        toast.error("FileId tidak ditemukan pada laporan ini.");
+        return;
+      }
 
       const res = await fetch(`/api/laporan/download/${fileId}`, {
         method: "GET",
         headers: { ...authHeaders },
       });
 
-      if (!res.ok) return alert(`Gagal download: ${await parseErrorMessage(res)}`);
+      if (!res.ok) {
+        toast.error(`Gagal download: ${await parseErrorMessage(res)}`);
+        return;
+      }
 
       const blob = await res.blob();
 
@@ -295,7 +307,7 @@ export default function LaporanPesertaPage() {
       setTimeout(() => window.URL.revokeObjectURL(url), 800);
     } catch (err: any) {
       console.error(err);
-      alert(`Gagal download: ${err?.message || "Unknown error"}`);
+      toast.error(`Gagal download: ${err?.message || "Unknown error"}`);
     }
   };
 
@@ -310,14 +322,18 @@ export default function LaporanPesertaPage() {
   };
 
   const doResubmit = async (laporanId: string, selectedFile: File) => {
-    if (!token) return alert("Token tidak ditemukan. Silakan login ulang.");
+    if (!token) {
+      toast.error("Token tidak ditemukan. Silakan login ulang.");
+      return;
+    }
 
     if (selectedFile.size > MAX_BYTES) {
-      return alert(
+      toast.error(
         `Ukuran file terlalu besar. Maksimal ${MAX_MB}MB.\nUkuran file kamu: ${bytesToMB(selectedFile.size).toFixed(
           2
         )}MB`
       );
+      return;
     }
 
     setIsResubmitting(true);
@@ -332,15 +348,16 @@ export default function LaporanPesertaPage() {
       });
 
       if (!res.ok) {
-        return alert(`Gagal upload revisi: ${await parseErrorMessage(res)}`);
+        toast.error(`Gagal upload revisi: ${await parseErrorMessage(res)}`);
+        return;
       }
 
-      alert("Upload revisi berhasil! Status laporan kembali ke pending.");
+      toast.success("Upload revisi berhasil! Status laporan kembali ke pending.");
       setResubmitForId(null);
       await getLaporanList();
     } catch (e: any) {
       console.error(e);
-      alert(`Gagal upload revisi: ${e?.message || "Unknown error"}`);
+      toast.error(`Gagal upload revisi: ${e?.message || "Unknown error"}`);
     } finally {
       setIsResubmitting(false);
     }
