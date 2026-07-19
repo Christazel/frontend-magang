@@ -79,4 +79,30 @@ export const apiCall = async <T,>(
     };
   }
 };
+
+/**
+ * Global fetcher for SWR
+ */
+export const fetcher = async (url: string) => {
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const res = await fetch(url, { headers });
+  
+  if (!res.ok) {
+    const error = new Error("An error occurred while fetching the data.");
+    let info;
+    try {
+      info = await res.json();
+    } catch {
+      info = await res.text();
+    }
+    (error as any).info = info;
+    (error as any).status = res.status;
+    throw error;
+  }
+  
+  return res.json();
+};
   
