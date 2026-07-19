@@ -13,6 +13,10 @@ import {
 } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
 
+// Import UI Atomic Components
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
@@ -53,8 +57,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden border">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md">
         {/* Header Logo */}
         <div className="bg-white py-6 px-4 text-center border-b">
           <div className="flex justify-center mb-4">
@@ -69,8 +73,8 @@ export default function LoginPage() {
               />
             </div>
           </div>
-          <h1 className="text-blue-800 text-xl font-bold">DINAS PENDIDIKAN</h1>
-          <h2 className="text-blue-800 text-lg">KABUPATEN MELAWI</h2>
+          <h1 className="text-brand-800 text-xl font-bold">DINAS PENDIDIKAN</h1>
+          <h2 className="text-brand-700 text-lg">KABUPATEN MELAWI</h2>
         </div>
 
         {/* Login Form */}
@@ -99,7 +103,7 @@ export default function LoginPage() {
                   placeholder="Masukkan email anda"
                   value={form.email}
                   onChange={handleChange}
-                  className="w-full pl-10 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 placeholder-gray-400"
+                  className="w-full pl-10 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 text-gray-800 placeholder-gray-400"
                   required
                   disabled={loading}
                 />
@@ -125,7 +129,7 @@ export default function LoginPage() {
                   placeholder="Masukkan password anda"
                   value={form.password}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-10 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 placeholder-gray-400"
+                  className="w-full pl-10 pr-10 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 text-gray-800 placeholder-gray-400"
                   required
                   disabled={loading}
                 />
@@ -145,39 +149,14 @@ export default function LoginPage() {
             </div>
 
             {/* Submit Button */}
-            <button
+            <Button
               type="submit"
-              disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 transition-colors text-white font-medium py-3 px-4 rounded-lg flex items-center justify-center"
+              isLoading={loading}
+              className="w-full"
+              size="lg"
             >
-              {loading ? (
-                <>
-                  <svg
-                    className="animate-spin h-5 w-5 mr-2 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                    />
-                  </svg>
-                  Memproses...
-                </>
-              ) : (
-                "Masuk"
-              )}
-            </button>
+              Masuk
+            </Button>
           </form>
 
           {/* Register Link */}
@@ -186,7 +165,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => router.push("/register")}
-              className="text-blue-600 hover:underline font-medium"
+              className="text-brand-600 hover:underline font-medium"
               disabled={loading}
             >
               Daftar
@@ -195,10 +174,10 @@ export default function LoginPage() {
         </div>
 
         {/* Footer */}
-        <div className="bg-gray-100 py-3 px-4 text-center text-gray-600 text-sm">
+        <div className="bg-gray-50 py-4 px-4 text-center text-gray-500 text-sm border-t">
           &copy; {new Date().getFullYear()} Dinas Pendidikan Kabupaten Melawi
         </div>
-      </div>
+      </Card>
     </div>
   );
 }
