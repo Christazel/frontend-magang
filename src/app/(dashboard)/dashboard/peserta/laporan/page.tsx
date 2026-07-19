@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import toast from "react-hot-toast";
 
 type ReviewStatus = "pending" | "sesuai" | "revisi";
 
@@ -40,18 +41,7 @@ const fmtTanggal = (iso: string) =>
 
 const bytesToMB = (bytes: number) => bytes / 1024 / 1024;
 
-async function readFileAsBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error("Gagal membaca file."));
-    reader.onload = () => {
-      const result = String(reader.result || "");
-      const commaIdx = result.indexOf(",");
-      resolve(commaIdx >= 0 ? result.slice(commaIdx + 1) : result);
-    };
-    reader.readAsDataURL(file);
-  });
-}
+
 
 function RefreshIcon({ spinning }: { spinning?: boolean }) {
   return (
@@ -199,55 +189,22 @@ export default function LaporanPesertaPage() {
     if (!res.ok) throw new Error(await parseErrorMessage(res));
   };
 
-  const uploadBase64 = async () => {
-    if (!file) throw new Error("File belum dipilih.");
-
-    const base64 = await readFileAsBase64(file);
-
-    const res = await fetch("/api/laporan/base64", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-      body: JSON.stringify({
-        filename: file.name,
-        base64,
-        judul: judul.trim(),
-        deskripsi: deskripsi.trim(),
-        mimeType: file.type || "application/octet-stream",
-      }),
-    });
-
-    if (!res.ok) throw new Error(await parseErrorMessage(res));
-  };
-
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!token) return alert("Token tidak ditemukan. Silakan login ulang.");
-    if (!file) return alert("Pilih file dulu.");
+    if (!token) return toast.error("Token tidak ditemukan. Silakan login ulang.");
+    if (!file) return toast.error("Pilih file dulu.");
 
     if (file.size > MAX_BYTES) {
-      return alert(
+      return toast.error(
         `Ukuran file terlalu besar. Maksimal ${MAX_MB}MB.\nUkuran file kamu: ${bytesToMB(file.size).toFixed(2)}MB`
       );
     }
 
     setIsUploading(true);
     try {
-      try {
-        await uploadMultipart();
-      } catch (err: any) {
-        const SAFE_BASE64_BYTES = 3 * 1024 * 1024;
-        if (file.size <= SAFE_BASE64_BYTES) {
-          console.warn("Multipart gagal, coba fallback base64...", err?.message);
-          await uploadBase64();
-        } else {
-          throw err;
-        }
-      }
+      await uploadMultipart();
 
-      alert("Laporan berhasil diupload!");
+      toast.success("Laporan berhasil diupload!");
       setFile(null);
       setJudul("");
       setDeskripsi("");
@@ -255,16 +212,16 @@ export default function LaporanPesertaPage() {
       await getLaporanList();
     } catch (err: any) {
       console.error(err);
-      alert(`Gagal upload laporan: ${err?.message || "Unknown error"}`);
+      toast.error(`Gagal upload laporan: ${err?.message || "Unknown error"}`);
     } finally {
       setIsUploading(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!token) return alert("Token tidak ditemukan. Silakan login ulang.");
+    if (!token) return toast.error("Token tidak ditemukan. Silakan login ulang.");
 
-    const ok = confirm("Yakin mau hapus laporan ini?");
+    const ok = window.confirm("Yakin mau hapus laporan ini?");
     if (!ok) return;
 
     const res = await fetch(`/api/laporan/${id}`, {
@@ -273,10 +230,10 @@ export default function LaporanPesertaPage() {
     });
 
     if (res.ok) {
-      alert("Laporan dihapus");
+      toast.success("Laporan dihapus");
       getLaporanList();
     } else {
-      alert(`Gagal menghapus laporan: ${await parseErrorMessage(res)}`);
+      toast.error(`Gagal menghapus laporan: ${await parseErrorMessage(res)}`);
     }
   };
 
