@@ -4,8 +4,9 @@ import { useAuth } from "@/hooks/useAuth";
 import Sidebar from "@/components/layout/Sidebar";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { useEffect, useState } from "react";
 import { Users, FileText, TrendingUp, Activity } from "lucide-react";
+import useSWR from "swr";
+import { fetcher } from "@/lib/api";
 
 // Chart.js
 import {
@@ -53,98 +54,30 @@ function hitungKeaktifan(hadir: number, tugas: number): number {
 
 export default function AdminDashboard() {
   const { user } = useAuth();
-  const [stats, setStats] = useState({
-    totalInterns: 0,
-    reportsSubmitted: 0,
-    averageActivity: 0, // rata-rata keaktifan semua peserta
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const { data: pesertaData, error: errorPeserta, isLoading: loadingPeserta } = useSWR<PesertaStats[]>("/api/users/admin/peserta", fetcher);
+  const { data: laporanData, error: errorLaporan, isLoading: loadingLaporan } = useSWR<any[]>("/api/laporan/admin", fetcher);
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      const token =
-        typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const loading = loadingPeserta || loadingLaporan;
+  const error = errorPeserta || errorLaporan ? "Terjadi kesalahan saat mengambil statistik dashboard." : "";
 
-      if (!token) {
-        console.warn("Token tidak ditemukan di dashboard admin.");
-        setLoading(false);
-        return;
-      }
+  const totalInterns = Array.isArray(pesertaData) ? pesertaData.length : 0;
+  const reportsSubmitted = Array.isArray(laporanData) ? laporanData.length : 0;
 
-      setLoading(true);
-      setError("");
+  // hitung rata-rata keaktifan semua peserta
+  let averageActivity = 0;
+  if (totalInterns > 0 && Array.isArray(pesertaData)) {
+    const totalPersen = pesertaData.reduce((sum, p) => {
+      return sum + hitungKeaktifan(p.hadir ?? 0, p.tugas ?? 0);
+    }, 0);
+    averageActivity = Math.round(totalPersen / totalInterns);
+    averageActivity = Math.min(100, Math.max(0, averageActivity));
+  }
 
-      try {
-        const [pesertaRes, reportRes] = await Promise.all([
-          // pakai endpoint yang sama dengan Manajemen Peserta
-          fetch("/api/users/admin/peserta", {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch("/api/laporan/admin", {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-        ]);
-
-        let pesertaData: PesertaStats[] = [];
-        let reportData: any[] = [];
-
-        if (pesertaRes.ok) {
-          pesertaData = await pesertaRes.json();
-        } else {
-          const text = await pesertaRes.text();
-          console.error(
-            "Gagal mengambil data peserta (admin/peserta):",
-            pesertaRes.status,
-            text
-          );
-          setError("Gagal mengambil data peserta.");
-        }
-
-        if (reportRes.ok) {
-          reportData = await reportRes.json();
-        } else {
-          const text = await reportRes.text();
-          console.error(
-            "Gagal mengambil data laporan (laporan/admin):",
-            reportRes.status,
-            text
-          );
-          if (!error) setError("Gagal mengambil data laporan.");
-        }
-
-        const totalInterns = Array.isArray(pesertaData)
-          ? pesertaData.length
-          : 0;
-        const reportsSubmitted = Array.isArray(reportData)
-          ? reportData.length
-          : 0;
-
-        // 🧮 hitung rata-rata keaktifan semua peserta
-        let averageActivity = 0;
-        if (totalInterns > 0 && Array.isArray(pesertaData)) {
-          const totalPersen = pesertaData.reduce((sum, p) => {
-            return sum + hitungKeaktifan(p.hadir ?? 0, p.tugas ?? 0);
-          }, 0);
-          averageActivity = Math.round(totalPersen / totalInterns);
-          averageActivity = Math.min(100, Math.max(0, averageActivity));
-        }
-
-        setStats({
-          totalInterns,
-          reportsSubmitted,
-          averageActivity,
-        });
-      } catch (err) {
-        console.error("Gagal mengambil statistik:", err);
-        setError("Terjadi kesalahan saat mengambil statistik dashboard.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStats();
-  }, []);
+  const stats = {
+    totalInterns,
+    reportsSubmitted,
+    averageActivity,
+  };
 
   // Data chart
   const doughnutData = {
