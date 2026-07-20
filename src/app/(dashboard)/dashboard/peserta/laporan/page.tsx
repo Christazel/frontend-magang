@@ -5,6 +5,10 @@ import Sidebar from "@/components/layout/Sidebar";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import toast from "react-hot-toast";
+import { Card, CardHeader, CardBody } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { DocumentTextIcon, DocumentArrowUpIcon, DocumentArrowDownIcon, TrashIcon, PencilSquareIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
 
 type ReviewStatus = "pending" | "sesuai" | "revisi";
 
@@ -40,27 +44,6 @@ const fmtTanggal = (iso: string) =>
   });
 
 const bytesToMB = (bytes: number) => bytes / 1024 / 1024;
-
-
-
-function RefreshIcon({ spinning }: { spinning?: boolean }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={`h-5 w-5 ${spinning ? "animate-spin" : ""}`}
-      aria-hidden="true"
-    >
-      <path d="M21 12a9 9 0 1 1-3-6.7" />
-      <path d="M21 3v7h-7" />
-    </svg>
-  );
-}
 
 /** ✅ Ambil nama file dari header Content-Disposition (kalau ada) */
 function getFilenameFromContentDisposition(header: string | null): string | null {
@@ -100,13 +83,13 @@ function normalizeId(id: any): string | null {
 function StatusBadge({ status }: { status?: ReviewStatus }) {
   const s: ReviewStatus = status ?? "pending";
 
-  const base = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border";
+  const base = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border tracking-wide uppercase";
   const cls =
     s === "sesuai"
-      ? "bg-green-50 text-green-700 border-green-200"
+      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
       : s === "revisi"
-      ? "bg-amber-50 text-amber-800 border-amber-200"
-      : "bg-gray-50 text-gray-700 border-gray-200";
+      ? "bg-rose-50 text-rose-700 border-rose-200"
+      : "bg-gray-100 text-gray-600 border-gray-200";
 
   const label = s === "sesuai" ? "Sesuai" : s === "revisi" ? "Revisi" : "Pending";
   return <span className={`${base} ${cls}`}>{label}</span>;
@@ -261,7 +244,6 @@ export default function LaporanPesertaPage() {
     }
   };
 
-  /** ✅ FIX DOWNLOAD: pakai fetch + Authorization header, bukan <a href> */
   const handleDownload = async (lap: LaporanType) => {
     try {
       if (!token) {
@@ -311,12 +293,8 @@ export default function LaporanPesertaPage() {
     }
   };
 
-  // ==========================
-  // ✅ RESUBMIT FILE (UPLOAD ULANG)
-  // ==========================
   const openResubmitPicker = (laporanId: string) => {
     setResubmitForId(laporanId);
-    // reset value biar bisa pilih file yang sama lagi
     if (resubmitInputRef.current) resubmitInputRef.current.value = "";
     resubmitInputRef.current?.click();
   };
@@ -382,249 +360,268 @@ export default function LaporanPesertaPage() {
   const fileTooBig = file ? file.size > MAX_BYTES : false;
 
   return (
-    <div className="flex min-h-screen bg-gray-100 overflow-x-hidden">
+    <div className="flex min-h-screen bg-gray-50/50">
       <Sidebar />
 
-      {/* min-w-0 penting biar konten gak “maksa” melebar dan bikin ruang kosong kanan */}
-      <div className="flex-1 min-w-0 md:ml-64 flex flex-col">
+      <div className="flex-1 md:ml-64 flex flex-col min-w-0">
         <Navbar />
 
-        <main className="flex-1 w-full p-4 sm:p-6">
-          {/* biar enak dibaca di layar besar, tapi tetap full di HP */}
-          <div className="w-full max-w-6xl mx-auto">
-            <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-gray-800">
-              Laporan Tugas Magang
-            </h1>
+        <main className="flex-1 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
+          {/* Header Title */}
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2.5 bg-teal-100 rounded-xl">
+              <DocumentTextIcon className="w-6 h-6 text-teal-700" />
+            </div>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
+                Laporan Tugas Magang
+              </h1>
+              <p className="text-sm text-gray-500">Unggah dan pantau laporan harian Anda</p>
+            </div>
+          </div>
 
-            {/* Upload */}
-            <div className="bg-white p-4 sm:p-5 rounded-lg shadow mb-6 sm:mb-8">
-              <form onSubmit={handleUpload} className="grid grid-cols-1 gap-3 md:grid-cols-12 md:items-center">
-                {/* File */}
-                <div className="md:col-span-4">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    onChange={(e) => setFile(e.target.files?.[0] || null)}
-                    className="w-full border p-2 rounded text-gray-800 file:mr-3 file:py-2 file:px-3 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700"
-                    accept=".pdf,.doc,.docx,.xls,.xlsx"
-                    required
-                  />
-                </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+            
+            {/* ─── Kiri: Form Upload ─── */}
+            <div className="lg:col-span-1 space-y-6">
+              <Card>
+                <CardHeader title="Upload Laporan Baru" />
+                <CardBody>
+                  <form onSubmit={handleUpload} className="space-y-4">
+                    <div>
+                      <label className="text-sm font-semibold text-gray-700 block mb-1.5">
+                        File Laporan
+                      </label>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        onChange={(e) => setFile(e.target.files?.[0] || null)}
+                        className="w-full text-sm text-gray-600 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100 transition-colors border border-gray-200 rounded-xl"
+                        accept=".pdf,.doc,.docx,.xls,.xlsx"
+                        required
+                      />
+                    </div>
 
-                {/* Judul */}
-                <div className="md:col-span-3">
-                  <input
-                    type="text"
-                    placeholder="Judul (opsional)"
-                    value={judul}
-                    onChange={(e) => setJudul(e.target.value)}
-                    className="w-full border p-2 rounded text-gray-800 placeholder-gray-500"
-                  />
-                </div>
+                    <Input
+                      label="Judul Laporan"
+                      placeholder="Cth: Laporan Kegiatan Minggu 1"
+                      value={judul}
+                      onChange={(e) => setJudul(e.target.value)}
+                    />
 
-                {/* Deskripsi */}
-                <div className="md:col-span-3">
-                  <input
-                    type="text"
-                    placeholder="Deskripsi (opsional)"
-                    value={deskripsi}
-                    onChange={(e) => setDeskripsi(e.target.value)}
-                    className="w-full border p-2 rounded text-gray-800 placeholder-gray-500"
-                  />
-                </div>
+                    <Input
+                      label="Deskripsi (Opsional)"
+                      placeholder="Tambahkan catatan singkat..."
+                      value={deskripsi}
+                      onChange={(e) => setDeskripsi(e.target.value)}
+                    />
 
-                {/* Button */}
-                <div className="md:col-span-2">
-                  <button
-                    type="submit"
-                    disabled={isUploading || fileTooBig}
-                    className={`w-full px-4 py-2.5 rounded text-white font-medium ${
-                      isUploading || fileTooBig
-                        ? "bg-blue-400 cursor-not-allowed"
-                        : "bg-blue-600 hover:bg-blue-700"
+                    <Button
+                      type="submit"
+                      disabled={isUploading || fileTooBig}
+                      isLoading={isUploading}
+                      className="w-full mt-2"
+                      leftIcon={<DocumentArrowUpIcon className="w-5 h-5" />}
+                    >
+                      Unggah Laporan
+                    </Button>
+                  </form>
+
+                  {/* Catatan Upload */}
+                  <div
+                    className={`mt-5 rounded-xl border p-4 text-sm transition-colors duration-300 ${
+                      fileTooBig ? "border-rose-200 bg-rose-50 text-rose-700" : "border-teal-100 bg-teal-50 text-teal-800"
                     }`}
                   >
-                    {isUploading ? "Uploading..." : "Upload"}
-                  </button>
-                </div>
-              </form>
+                    <p className="font-bold mb-1">Catatan Upload</p>
+                    <p className="text-xs opacity-90 leading-relaxed">
+                      Maksimal ukuran file adalah <b>{MAX_MB}MB</b>. Format yang didukung: PDF, Word, Excel.
+                    </p>
 
-              {/* Notice ukuran */}
-              <div
-                className={`mt-3 rounded border p-3 text-sm ${
-                  fileTooBig ? "border-red-200 bg-red-50 text-red-700" : "border-blue-200 bg-blue-50 text-blue-700"
-                }`}
-              >
-                <p className="font-semibold">Catatan Upload</p>
-                <p className="mt-1">
-                  Ukuran file maksimal <b>{MAX_MB}MB</b>. Jika lebih besar, upload akan ditolak oleh server.
-                </p>
-
-                {file ? (
-                  <p className="mt-2 break-words">
-                    File dipilih: <b>{file.name}</b> — <b>{fileSizeMB.toFixed(2)}MB</b>{" "}
-                    {fileTooBig ? <span className="ml-1">(terlalu besar)</span> : null}
-                  </p>
-                ) : (
-                  <p className="mt-2">Belum ada file dipilih.</p>
-                )}
-              </div>
+                    {file && (
+                      <div className="mt-3 p-2 bg-white rounded-lg border border-teal-100 flex items-center justify-between">
+                        <span className="text-xs font-medium truncate max-w-[150px]">{file.name}</span>
+                        <span className="text-xs font-bold whitespace-nowrap">
+                          {fileSizeMB.toFixed(2)} MB {fileTooBig && <span className="text-rose-500 ml-1">!</span>}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </CardBody>
+              </Card>
             </div>
 
-            {/* List */}
-            <div className="bg-white p-4 sm:p-5 rounded-lg shadow">
-              <div className="flex items-center justify-between gap-3 mb-4">
-                <h2 className="text-base sm:text-lg font-semibold text-gray-800">Riwayat Laporan</h2>
+            {/* ─── Kanan: Riwayat Laporan ─── */}
+            <div className="lg:col-span-2">
+              <Card>
+                <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+                  <div>
+                    <h2 className="text-base font-bold text-gray-800">Riwayat Laporan</h2>
+                    <p className="text-xs text-gray-500">Daftar semua laporan yang telah diunggah</p>
+                  </div>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={getLaporanList}
+                    disabled={loadingList}
+                    leftIcon={<ArrowPathIcon className={`w-4 h-4 ${loadingList ? "animate-spin" : ""}`} />}
+                  >
+                    Refresh
+                  </Button>
+                </div>
 
-                <button
-                  type="button"
-                  onClick={getLaporanList}
-                  disabled={loadingList}
-                  title="Refresh"
-                  aria-label="Refresh"
-                  className={`p-2.5 rounded text-white transition focus:outline-none focus:ring-2 focus:ring-blue-300 ${
-                    loadingList ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
-                  }`}
-                >
-                  <RefreshIcon spinning={loadingList} />
-                </button>
-              </div>
+                <CardBody className="p-6">
+                  {/* hidden input untuk resubmit */}
+                  <input
+                    ref={resubmitInputRef}
+                    type="file"
+                    className="hidden"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx"
+                    onChange={onResubmitFileChange}
+                  />
 
-              {/* hidden input untuk resubmit */}
-              <input
-                ref={resubmitInputRef}
-                type="file"
-                className="hidden"
-                accept=".pdf,.doc,.docx,.xls,.xlsx"
-                onChange={onResubmitFileChange}
-              />
+                  {loadingList ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-teal-600">
+                      <ArrowPathIcon className="w-8 h-8 animate-spin mb-3" />
+                      <p className="text-sm font-semibold">Memuat riwayat laporan...</p>
+                    </div>
+                  ) : laporanList.length === 0 ? (
+                    <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/50">
+                      <DocumentTextIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                      <p className="text-sm font-semibold text-gray-500">Belum ada laporan</p>
+                      <p className="text-xs text-gray-400 mt-1">Laporan yang Anda unggah akan muncul di sini.</p>
+                    </div>
+                  ) : (
+                    <ul className="space-y-4">
+                      {laporanList.map((lap) => {
+                        const s: ReviewStatus = (lap.status ?? "pending") as ReviewStatus;
+                        const showCatatan = !!lap.adminCatatan?.trim();
+                        const isRevisi = s === "revisi";
+                        const resubmitBusy = isResubmitting && resubmitForId === lap._id;
 
-              {loadingList ? (
-                <p className="text-gray-600">Memuat data...</p>
-              ) : laporanList.length === 0 ? (
-                <p className="text-gray-600">Belum ada laporan diunggah.</p>
-              ) : (
-                <ul className="space-y-3 sm:space-y-4 text-gray-800">
-                  {laporanList.map((lap) => {
-                    const s: ReviewStatus = (lap.status ?? "pending") as ReviewStatus;
-                    const showCatatan = !!lap.adminCatatan?.trim();
-                    const isRevisi = s === "revisi";
-                    const resubmitBusy = isResubmitting && resubmitForId === lap._id;
-
-                    return (
-                      <li key={lap._id} className="border rounded-lg p-3 sm:p-4">
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-start justify-between gap-3">
-                            <button
-                              type="button"
-                              onClick={() => handleDownload(lap)}
-                              className="text-left text-blue-600 underline break-words"
-                              title="Download laporan"
-                            >
-                              {lap.judul}
-                            </button>
-
-                            {/* ✅ Badge status (tambahin tanpa rombak layout) */}
-                            <div className="shrink-0">
-                              <StatusBadge status={s} />
-                            </div>
-                          </div>
-
-                          <p className="text-xs sm:text-sm text-gray-600">{fmtTanggal(lap.createdAt)}</p>
-
-                          {/* ✅ Catatan admin tampil kalau ada */}
-                          {showCatatan && (
-                            <div className="mt-2 rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-                              <p className="font-semibold">Catatan Admin</p>
-                              <p className="mt-1 break-words">{lap.adminCatatan}</p>
-                              {isRevisi && (
-                                <p className="mt-2 text-xs text-amber-800">
-                                  Status: <b>Revisi</b> — upload ulang file sesuai catatan admin.
+                        return (
+                          <li key={lap._id} className="border border-gray-200 rounded-2xl p-5 hover:shadow-md transition-shadow duration-200 bg-white">
+                            
+                            {/* Header Item */}
+                            <div className="flex items-start justify-between gap-4 mb-3">
+                              <div>
+                                <h3 className="text-base font-bold text-gray-800 line-clamp-1">
+                                  {lap.judul || "Laporan Tanpa Judul"}
+                                </h3>
+                                <p className="text-xs font-medium text-gray-500 mt-0.5">
+                                  {fmtTanggal(lap.createdAt)}
                                 </p>
-                              )}
-                            </div>
-                          )}
-
-                          {editingId === lap._id ? (
-                            <>
-                              <input
-                                type="text"
-                                value={editDeskripsi}
-                                onChange={(e) => setEditDeskripsi(e.target.value)}
-                                className="border px-2 py-2 mt-2 rounded w-full text-gray-800"
-                              />
-
-                              <div className="mt-3 flex flex-wrap gap-2 text-sm">
-                                <button
-                                  type="button"
-                                  onClick={() => handleUpdateDeskripsi(lap._id)}
-                                  className="px-3 py-2 rounded bg-green-600 text-white hover:bg-green-700"
-                                >
-                                  Simpan
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => setEditingId(null)}
-                                  className="px-3 py-2 rounded bg-gray-200 text-gray-800 hover:bg-gray-300"
-                                >
-                                  Batal
-                                </button>
                               </div>
-                            </>
-                          ) : (
-                            <>
-                              <p className="text-sm text-gray-700 break-words mt-2">
-                                {lap.deskripsi?.trim() ? (
-                                  lap.deskripsi
-                                ) : (
-                                  <span className="text-red-500">Belum ada deskripsi.</span>
-                                )}
-                              </p>
+                              <div className="shrink-0 flex items-center gap-2">
+                                <StatusBadge status={s} />
+                              </div>
+                            </div>
 
-                              <div className="mt-3 flex flex-wrap gap-2 text-sm">
-                                <button
-                                  type="button"
+                            {/* Deskripsi Edit Mode vs View Mode */}
+                            {editingId === lap._id ? (
+                              <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-4">
+                                <Input
+                                  value={editDeskripsi}
+                                  onChange={(e) => setEditDeskripsi(e.target.value)}
+                                  placeholder="Update deskripsi..."
+                                />
+                                <div className="mt-3 flex gap-2">
+                                  <Button size="sm" onClick={() => handleUpdateDeskripsi(lap._id)}>
+                                    Simpan
+                                  </Button>
+                                  <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>
+                                    Batal
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="mb-4">
+                                {lap.deskripsi?.trim() ? (
+                                  <p className="text-sm text-gray-600 leading-relaxed bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                    {lap.deskripsi}
+                                  </p>
+                                ) : (
+                                  <p className="text-xs italic text-gray-400">Tidak ada deskripsi disertakan.</p>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Catatan Admin */}
+                            {showCatatan && (
+                              <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50/50 p-4">
+                                <div className="flex items-center gap-2 mb-1.5">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                                  <p className="text-xs font-bold text-rose-800 uppercase tracking-wide">Catatan Admin</p>
+                                </div>
+                                <p className="text-sm text-rose-700 leading-relaxed font-medium">"{lap.adminCatatan}"</p>
+                                {isRevisi && (
+                                  <p className="mt-2 text-xs text-rose-600 bg-white/60 p-2 rounded-lg border border-rose-100 font-semibold inline-block">
+                                    Tindakan diperlukan: Silakan upload ulang file revisi Anda.
+                                  </p>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Actions Footer */}
+                            <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-gray-100">
+                              <Button
+                                size="xs"
+                                variant="outline"
+                                leftIcon={<DocumentArrowDownIcon className="w-4 h-4" />}
+                                onClick={() => handleDownload(lap)}
+                              >
+                                Unduh File
+                              </Button>
+
+                              {!editingId && (
+                                <Button
+                                  size="xs"
+                                  variant="ghost"
+                                  leftIcon={<PencilSquareIcon className="w-4 h-4" />}
                                   onClick={() => {
                                     setEditingId(lap._id);
                                     setEditDeskripsi(lap.deskripsi || "");
                                   }}
-                                  className="px-3 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
                                 >
-                                  Edit Deskripsi
-                                </button>
+                                  Edit Info
+                                </Button>
+                              )}
 
-                                {/* ✅ Upload revisi hanya kalau status revisi */}
-                                {isRevisi && (
-                                  <button
-                                    type="button"
-                                    onClick={() => openResubmitPicker(lap._id)}
-                                    disabled={resubmitBusy}
-                                    className={`px-3 py-2 rounded text-white ${
-                                      resubmitBusy ? "bg-amber-400 cursor-not-allowed" : "bg-amber-600 hover:bg-amber-700"
-                                    }`}
-                                    title="Upload ulang file sesuai catatan admin"
-                                  >
-                                    {resubmitBusy ? "Uploading..." : "Upload Revisi"}
-                                  </button>
-                                )}
-
-                                <button
-                                  type="button"
-                                  onClick={() => handleDelete(lap._id)}
-                                  className="px-3 py-2 rounded bg-red-600 text-white hover:bg-red-700"
+                              {isRevisi && (
+                                <Button
+                                  size="xs"
+                                  variant="secondary"
+                                  leftIcon={<DocumentArrowUpIcon className="w-4 h-4" />}
+                                  onClick={() => openResubmitPicker(lap._id)}
+                                  disabled={resubmitBusy}
+                                  isLoading={resubmitBusy}
                                 >
-                                  Hapus
-                                </button>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
+                                  {resubmitBusy ? "Mengunggah..." : "Upload Revisi"}
+                                </Button>
+                              )}
+
+                              <div className="flex-1" />
+
+                              <Button
+                                size="xs"
+                                variant="ghost"
+                                className="text-rose-600 hover:text-rose-700 hover:bg-rose-50"
+                                leftIcon={<TrashIcon className="w-4 h-4" />}
+                                onClick={() => handleDelete(lap._id)}
+                              >
+                                Hapus
+                              </Button>
+                            </div>
+
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </CardBody>
+              </Card>
             </div>
+
           </div>
         </main>
 
