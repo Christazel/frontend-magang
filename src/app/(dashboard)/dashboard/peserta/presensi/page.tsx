@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ClockIcon, CheckCircleIcon, ArrowLeftIcon, MapPinIcon } from "@heroicons/react/24/outline";
 
 interface Presensi {
   jamMasuk?: string;
@@ -16,7 +17,6 @@ const DEFAULT_KELUAR: WindowTime = { start: "16:00:00", end: "23:59:59" };
 
 function isValidHHmmss(value?: string) {
   if (!value) return false;
-  // HH:mm:ss, HH 00-23, mm/ss 00-59
   return /^([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/.test(value);
 }
 
@@ -25,7 +25,6 @@ function getWindowFromEnv(prefix: "MASUK" | "KELUAR", fallback: WindowTime): Win
     process.env[`NEXT_PUBLIC_PRESENSI_${prefix}_START` as const] || fallback.start;
   const end =
     process.env[`NEXT_PUBLIC_PRESENSI_${prefix}_END` as const] || fallback.end;
-
   return {
     start: isValidHHmmss(start) ? start : fallback.start,
     end: isValidHHmmss(end) ? end : fallback.end,
@@ -33,7 +32,6 @@ function getWindowFromEnv(prefix: "MASUK" | "KELUAR", fallback: WindowTime): Win
 }
 
 function getNowWibParts() {
-  // Jam WIB walaupun device timezone beda
   const dtf = new Intl.DateTimeFormat("id-ID", {
     timeZone: "Asia/Jakarta",
     hour12: false,
@@ -74,17 +72,13 @@ function toSeconds(hhmmss: string) {
 
 function inWindow(nowHHmmss: string, win: WindowTime) {
   const now = toSeconds(nowHHmmss);
-  const start = toSeconds(win.start);
-  const end = toSeconds(win.end);
-  return now >= start && now <= end;
+  return now >= toSeconds(win.start) && now <= toSeconds(win.end);
 }
 
 export default function PresensiPage() {
   const router = useRouter();
 
-  // ✅ Anti hydration mismatch: render jam/date setelah mount
   const [mounted, setMounted] = useState(false);
-
   const [presensiHariIni, setPresensiHariIni] = useState<Presensi | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -132,7 +126,8 @@ export default function PresensiPage() {
 
   const getLocation = (): Promise<{ lat: number; lng: number }> => {
     return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) return reject(new Error("Geolocation tidak didukung browser ini"));
+      if (!navigator.geolocation)
+        return reject(new Error("Geolocation tidak didukung browser ini"));
 
       navigator.geolocation.getCurrentPosition(
         (pos) => {
@@ -153,21 +148,16 @@ export default function PresensiPage() {
     setError("");
     setSuccess("");
 
-    // Guard UX (backend tetap final)
     const timeNow = nowWib?.time || "";
     if (tipe === "masuk" && (!nowWib || !canMasuk)) {
       setError(
-        `Presensi masuk hanya ${masukWindow.start} - ${masukWindow.end} WIB. Sekarang: ${
-          timeNow || "-"
-        } WIB.`
+        `Presensi masuk hanya ${masukWindow.start} – ${masukWindow.end} WIB. Sekarang: ${timeNow || "-"} WIB.`
       );
       return;
     }
     if (tipe === "keluar" && (!nowWib || !canKeluar)) {
       setError(
-        `Presensi keluar hanya ${keluarWindow.start} - ${keluarWindow.end} WIB. Sekarang: ${
-          timeNow || "-"
-        } WIB.`
+        `Presensi keluar hanya ${keluarWindow.start} – ${keluarWindow.end} WIB. Sekarang: ${timeNow || "-"} WIB.`
       );
       return;
     }
@@ -194,7 +184,7 @@ export default function PresensiPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.msg || "Gagal melakukan presensi");
 
-      setSuccess(`Presensi ${tipe} berhasil!`);
+      setSuccess(`Presensi ${tipe} berhasil dicatat!`);
       fetchPresensiHariIni();
     } catch (err: any) {
       setError(err.message || "Terjadi kesalahan saat presensi");
@@ -205,138 +195,201 @@ export default function PresensiPage() {
 
   const masukDisabled = loading || !mounted || !canMasuk;
   const keluarDisabled = loading || !mounted || !canKeluar;
+  const isDone = !!presensiHariIni?.jamMasuk && !!presensiHariIni?.jamKeluar;
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 px-3 py-6 sm:px-4 sm:py-8 md:px-6 lg:px-8">
-      <div className="bg-white p-4 sm:p-6 md:p-8 rounded-2xl shadow-2xl w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl border border-gray-100">
-        {/* Header */}
-        <div className="text-center mb-6 sm:mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full mb-3 sm:mb-4 shadow-lg">
-            <svg className="w-7 h-7 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
 
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 leading-snug">
-            Presensi Hari Ini
-          </h2>
+        {/* ── Card Utama ── */}
+        <div className="bg-white rounded-2xl shadow-soft border border-gray-100 overflow-hidden">
 
-          <p className="text-xs sm:text-sm text-gray-500 mt-1 sm:mt-2 px-4 sm:px-0">
-            Catat kehadiran Anda dengan mudah
-          </p>
-
-          {/* Jam WIB realtime */}
-          <div className="mt-3 flex flex-col items-center gap-2">
-            <div className="inline-flex items-center gap-2 rounded-full bg-gray-50 border border-gray-200 px-3 py-1.5 text-xs sm:text-sm">
-              <span className="text-gray-500">WIB</span>
-              <span className="font-semibold text-gray-800 tabular-nums">
-                {mounted && nowWib ? nowWib.time : "--:--:--"}
-              </span>
-            </div>
-
-            <div className="text-[11px] sm:text-xs text-gray-600">
-              <div>
-                Jam Masuk: <b>{masukWindow.start} - {masukWindow.end} WIB</b>
+          {/* Header strip teal */}
+          <div
+            className="px-6 py-5 text-white"
+            style={{ background: "linear-gradient(135deg, #0f4c35 0%, #0d9488 100%)" }}
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center flex-shrink-0">
+                <ClockIcon className="w-5 h-5 text-white" />
               </div>
               <div>
-                Jam Keluar: <b>{keluarWindow.start} - {keluarWindow.end} WIB</b>
+                <h1 className="text-lg font-bold leading-tight">Presensi Harian</h1>
+                <p className="text-teal-200 text-xs">Catat kehadiran Anda hari ini</p>
+              </div>
+            </div>
+
+            {/* Jam WIB realtime */}
+            <div className="bg-white/10 rounded-xl px-4 py-3 flex items-center justify-between">
+              <div>
+                <p className="text-teal-200 text-[10px] font-semibold uppercase tracking-widest mb-0.5">
+                  Waktu Sekarang (WIB)
+                </p>
+                <p className="text-white font-mono text-2xl font-bold tabular-nums tracking-wider">
+                  {mounted && nowWib ? nowWib.time : "--:--:--"}
+                </p>
+              </div>
+              <div className="text-right text-teal-100 text-xs leading-relaxed">
+                <p>{mounted && nowWib ? nowWib.datePretty : "-"}</p>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Alerts */}
-        {success && (
-          <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-green-50 border-l-4 border-green-500 rounded-lg">
-            <p className="text-xs sm:text-sm text-green-700 font-medium">{success}</p>
-          </div>
-        )}
-        {error && (
-          <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
-            <p className="text-xs sm:text-sm text-red-700 font-medium">{error}</p>
-          </div>
-        )}
+          {/* Body */}
+          <div className="px-6 py-5 space-y-4">
 
-        {/* Info Card */}
-        <div className="mb-5 sm:mb-6 bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-5 rounded-xl border border-gray-200 shadow-sm">
-          <div className="space-y-3">
-            <div className="flex items-start justify-between gap-3 py-2 border-b border-gray-200">
-              <span className="text-gray-600 font-medium text-xs sm:text-sm">Tanggal</span>
-              <span className="text-gray-800 font-semibold text-xs sm:text-sm text-right">
-                {mounted && nowWib ? nowWib.datePretty : "-"}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between gap-3 py-2 border-b border-gray-200">
-              <span className="text-gray-600 font-medium text-xs sm:text-sm">Jam Masuk</span>
-              <span className={`font-bold ${presensiHariIni?.jamMasuk ? "text-green-600" : "text-gray-400"}`}>
-                {presensiHariIni?.jamMasuk || "Belum Presensi"}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between gap-3 py-2">
-              <span className="text-gray-600 font-medium text-xs sm:text-sm">Jam Keluar</span>
-              <span className={`font-bold ${presensiHariIni?.jamKeluar ? "text-red-600" : "text-gray-400"}`}>
-                {presensiHariIni?.jamKeluar || "Belum Presensi"}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Buttons */}
-        <div className="flex flex-col gap-3 mb-4 sm:mb-5">
-          {!presensiHariIni?.jamMasuk && (
-            <>
-              <button
-                onClick={() => handleAbsen("masuk")}
-                disabled={masukDisabled}
-                title={!canMasuk ? `Aktif ${masukWindow.start}-${masukWindow.end} WIB` : undefined}
-                className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? "Memproses..." : "Presensi Masuk"}
-              </button>
-
-              {mounted && !canMasuk && (
-                <p className="text-[11px] sm:text-xs text-gray-500 text-center">
-                  Tombol aktif pada <b>{masukWindow.start} - {masukWindow.end} WIB</b>
+            {/* Jadwal window */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-center">
+                <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-1">
+                  Jam Masuk
                 </p>
-              )}
-            </>
-          )}
-
-          {presensiHariIni?.jamMasuk && !presensiHariIni?.jamKeluar && (
-            <>
-              <button
-                onClick={() => handleAbsen("keluar")}
-                disabled={keluarDisabled}
-                title={!canKeluar ? `Aktif ${keluarWindow.start}-${keluarWindow.end} WIB` : undefined}
-                className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-3 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? "Memproses..." : "Presensi Keluar"}
-              </button>
-
-              {mounted && !canKeluar && (
-                <p className="text-[11px] sm:text-xs text-gray-500 text-center">
-                  Tombol aktif pada <b>{keluarWindow.start} - {keluarWindow.end} WIB</b>
+                <p className="text-sm font-bold text-emerald-700 font-mono">
+                  {masukWindow.start.slice(0, 5)}
                 </p>
-              )}
-            </>
-          )}
-
-          {presensiHariIni?.jamMasuk && presensiHariIni?.jamKeluar && (
-            <div className="w-full bg-blue-50 border-2 border-blue-200 text-blue-700 font-semibold py-3 rounded-xl text-center">
-              Presensi Hari Ini Lengkap
+                <p className="text-[10px] text-emerald-500">
+                  s/d {masukWindow.end.slice(0, 5)} WIB
+                </p>
+              </div>
+              <div className="bg-rose-50 border border-rose-100 rounded-xl p-3 text-center">
+                <p className="text-[10px] font-bold text-rose-600 uppercase tracking-wider mb-1">
+                  Jam Keluar
+                </p>
+                <p className="text-sm font-bold text-rose-700 font-mono">
+                  {keluarWindow.start.slice(0, 5)}
+                </p>
+                <p className="text-[10px] text-rose-500">
+                  s/d {keluarWindow.end.slice(0, 5)} WIB
+                </p>
+              </div>
             </div>
-          )}
+
+            {/* Status presensi hari ini */}
+            <div className="border border-gray-100 rounded-xl divide-y divide-gray-100">
+              <div className="flex items-center justify-between px-4 py-3">
+                <span className="text-sm text-gray-500 font-medium">Jam Masuk</span>
+                <span
+                  className={`text-sm font-bold ${
+                    presensiHariIni?.jamMasuk ? "text-emerald-600" : "text-gray-300"
+                  }`}
+                >
+                  {presensiHariIni?.jamMasuk || "—"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between px-4 py-3">
+                <span className="text-sm text-gray-500 font-medium">Jam Keluar</span>
+                <span
+                  className={`text-sm font-bold ${
+                    presensiHariIni?.jamKeluar ? "text-rose-600" : "text-gray-300"
+                  }`}
+                >
+                  {presensiHariIni?.jamKeluar || "—"}
+                </span>
+              </div>
+              {presensiHariIni?.lokasi && (
+                <div className="flex items-start gap-2 px-4 py-3">
+                  <MapPinIcon className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                  <span className="text-xs text-gray-400 break-all">
+                    {presensiHariIni.lokasi}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Alert messages */}
+            {success && (
+              <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-sm">
+                <CheckCircleIcon className="w-4 h-4 flex-shrink-0" />
+                {success}
+              </div>
+            )}
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+                {error}
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="space-y-2.5">
+              {isDone ? (
+                <div className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-teal-50 border-2 border-teal-200 text-teal-700 font-semibold text-sm">
+                  <CheckCircleIcon className="w-5 h-5" />
+                  Presensi Hari Ini Selesai
+                </div>
+              ) : (
+                <>
+                  {!presensiHariIni?.jamMasuk && (
+                    <div className="space-y-1.5">
+                      <button
+                        onClick={() => handleAbsen("masuk")}
+                        disabled={masukDisabled}
+                        className="w-full py-3 rounded-xl font-semibold text-white text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{
+                          background: masukDisabled
+                            ? "#9ca3af"
+                            : "linear-gradient(135deg, #10b981, #059669)",
+                          boxShadow: masukDisabled
+                            ? "none"
+                            : "0 4px 14px rgba(16,185,129,0.35)",
+                        }}
+                      >
+                        {loading ? "Memproses..." : "Presensi Masuk"}
+                      </button>
+                      {mounted && !canMasuk && (
+                        <p className="text-center text-[11px] text-gray-400">
+                          Tombol aktif pukul{" "}
+                          <span className="font-semibold text-gray-500">
+                            {masukWindow.start.slice(0, 5)} – {masukWindow.end.slice(0, 5)} WIB
+                          </span>
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {presensiHariIni?.jamMasuk && !presensiHariIni?.jamKeluar && (
+                    <div className="space-y-1.5">
+                      <button
+                        onClick={() => handleAbsen("keluar")}
+                        disabled={keluarDisabled}
+                        className="w-full py-3 rounded-xl font-semibold text-white text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{
+                          background: keluarDisabled
+                            ? "#9ca3af"
+                            : "linear-gradient(135deg, #f43f5e, #e11d48)",
+                          boxShadow: keluarDisabled
+                            ? "none"
+                            : "0 4px 14px rgba(244,63,94,0.35)",
+                        }}
+                      >
+                        {loading ? "Memproses..." : "Presensi Keluar"}
+                      </button>
+                      {mounted && !canKeluar && (
+                        <p className="text-center text-[11px] text-gray-400">
+                          Tombol aktif pukul{" "}
+                          <span className="font-semibold text-gray-500">
+                            {keluarWindow.start.slice(0, 5)} – {keluarWindow.end.slice(0, 5)} WIB
+                          </span>
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Back button */}
+              <button
+                type="button"
+                onClick={() => router.push("/dashboard/peserta")}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium text-gray-500 bg-gray-50 hover:bg-gray-100 border border-gray-200 transition-colors duration-200"
+              >
+                <ArrowLeftIcon className="w-4 h-4" />
+                Kembali ke Dashboard
+              </button>
+            </div>
+
+          </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => router.push("/dashboard/peserta")}
-          className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 rounded-xl border border-gray-200"
-        >
-          Kembali ke Dashboard
-        </button>
       </div>
     </div>
   );
