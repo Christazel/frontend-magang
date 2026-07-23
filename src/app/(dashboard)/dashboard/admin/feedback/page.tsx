@@ -4,6 +4,10 @@ import { useEffect, useState } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import { Card, CardBody } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { ChatBubbleLeftEllipsisIcon, PaperAirplaneIcon } from "@heroicons/react/24/outline";
+import toast from "react-hot-toast";
 
 type User = {
   _id: string;
@@ -19,7 +23,6 @@ export default function FeedbackAdminPage() {
   const [selectedUser, setSelectedUser] = useState("");
   const [feedback, setFeedback] = useState("");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
 
   const fetchPeserta = async () => {
     const token = localStorage.getItem("token");
@@ -39,16 +42,26 @@ export default function FeedbackAdminPage() {
       setPesertaList(data);
     } catch (err) {
       console.error("Gagal mengambil peserta:", err);
-      setMessage("❌ Gagal mengambil daftar peserta");
+      toast.error("Gagal mengambil daftar peserta");
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setMessage("");
+    
+    if (!selectedUser) {
+      toast.error("Silakan pilih peserta terlebih dahulu.");
+      return;
+    }
+    
+    if (!feedback.trim()) {
+      toast.error("Pesan feedback tidak boleh kosong.");
+      return;
+    }
 
+    setLoading(true);
     const token = localStorage.getItem("token");
+    
     try {
       const res = await fetch(`${API_BASE}/feedback`, {
         method: "POST",
@@ -68,11 +81,11 @@ export default function FeedbackAdminPage() {
       const result = await res.json();
       if (!res.ok) throw new Error(result?.msg || "Gagal mengirim feedback");
 
-      setMessage("✅ Feedback berhasil dikirim");
+      toast.success("Feedback berhasil dikirim ke peserta!");
       setSelectedUser("");
       setFeedback("");
     } catch (error: any) {
-      setMessage("❌ " + (error.message || "Gagal mengirim feedback"));
+      toast.error(error.message || "Gagal mengirim feedback");
     } finally {
       setLoading(false);
     }
@@ -83,73 +96,84 @@ export default function FeedbackAdminPage() {
   }, []);
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-gray-50/50 overflow-x-hidden">
       <Sidebar />
-      <div className="flex-1 md:ml-64 flex flex-col">
+      <div className="flex-1 md:ml-64 flex flex-col min-w-0">
         <Navbar />
-        <main className="p-4 sm:p-6 flex-1">
-          <h1 className="text-2xl font-bold mb-6 text-gray-800">
-            Kirim Feedback ke Peserta
-          </h1>
-
-          <form
-            onSubmit={handleSubmit}
-            className="bg-white p-4 sm:p-6 rounded shadow max-w-xl w-full"
-          >
-            {message && (
-              <div
-                className={`mb-4 p-3 rounded text-sm ${
-                  message.startsWith("✅")
-                    ? "bg-green-100 text-green-700"
-                    : "bg-red-100 text-red-700"
-                }`}
-              >
-                {message}
-              </div>
-            )}
-
-            <div className="mb-4">
-              <label className="block font-medium mb-1 text-gray-700">
-                Pilih Peserta
-              </label>
-              <select
-                value={selectedUser}
-                onChange={(e) => setSelectedUser(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded text-gray-800"
-                required
-              >
-                <option value="">— Pilih Peserta —</option>
-                {pesertaList.map((p) => (
-                  <option key={p._id} value={p._id}>
-                    {p.name} ({p.email})
-                  </option>
-                ))}
-              </select>
+        
+        <main className="flex-1 w-full max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
+          
+          <div className="mb-8 flex items-center gap-4">
+            <div className="p-3 bg-teal-100 rounded-2xl shadow-sm">
+              <ChatBubbleLeftEllipsisIcon className="w-8 h-8 text-teal-700" />
             </div>
-
-            <div className="mb-4">
-              <label className="block font-medium mb-1 text-gray-700">
-                Pesan Feedback
-              </label>
-              <textarea
-                value={feedback}
-                onChange={(e) => setFeedback(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded text-gray-800"
-                rows={4}
-                placeholder="Tulis feedback untuk peserta..."
-                required
-              />
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Kirim Feedback
+              </h1>
+              <p className="text-gray-500 mt-1">
+                Kirimkan evaluasi, saran, atau teguran langsung ke peserta magang.
+              </p>
             </div>
+          </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-            >
-              {loading ? "Mengirim..." : "Kirim Feedback"}
-            </button>
-          </form>
+          <Card className="shadow-sm border-gray-100">
+            <CardBody className="p-6 sm:p-8">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                    Kirim Kepada <span className="text-rose-500">*</span>
+                  </label>
+                  <select
+                    value={selectedUser}
+                    onChange={(e) => setSelectedUser(e.target.value)}
+                    className="w-full p-3 bg-gray-50/50 border border-gray-200 rounded-xl text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all font-medium appearance-none"
+                    required
+                  >
+                    <option value="" disabled>— Pilih Peserta Magang —</option>
+                    {pesertaList.map((p) => (
+                      <option key={p._id} value={p._id}>
+                        {p.name} ({p.email})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                    Pesan Feedback <span className="text-rose-500">*</span>
+                  </label>
+                  <textarea
+                    value={feedback}
+                    onChange={(e) => setFeedback(e.target.value)}
+                    className="w-full p-4 bg-gray-50/50 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all resize-none font-medium leading-relaxed"
+                    rows={6}
+                    placeholder="Tuliskan feedback yang membangun untuk peserta..."
+                    required
+                  />
+                  <p className="mt-2 text-xs text-gray-500 font-medium">
+                    Feedback akan langsung muncul di halaman dashboard peserta yang bersangkutan.
+                  </p>
+                </div>
+
+                <div className="pt-2 border-t border-gray-100 flex justify-end">
+                  <Button 
+                    type="submit" 
+                    disabled={loading} 
+                    isLoading={loading}
+                    leftIcon={<PaperAirplaneIcon className="w-5 h-5" />}
+                    className="w-full sm:w-auto px-8"
+                  >
+                    Kirim Feedback
+                  </Button>
+                </div>
+              </form>
+            </CardBody>
+          </Card>
+          
         </main>
+        
         <Footer />
       </div>
     </div>
