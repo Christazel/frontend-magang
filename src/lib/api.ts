@@ -1,108 +1,148 @@
 // ============================================
-// API Service Functions
+// API Client — Axios dengan Global Interceptor
+// Versi: Upgrade dengan auth header & auto-logout
 // ============================================
 
-import type { LoginRequest, LoginResponse, ApiResponse } from "@/types";
+import axios from "axios";
+import type { LoginRequest, LoginResponse, PaginationMeta } from "@/types";
 
-/**
- * Error handler utility
- */
-function handleApiError(error: unknown): string {
-  if (error instanceof Error) {
-    return error.message;
+// ---- Axios Instance ----
+
+export const apiClient = axios.create({
+  baseURL: "/api",
+  timeout: 15000,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// ---- Request Interceptor: otomatis pasang Authorization header ----
+apiClient.interceptors.request.use(
+  (config) => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("token");
+      if (token) {
+        config.headers["Authorization"] = `Bearer ${token}`;
+      }
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// ---- Response Interceptor: otomatis handle 401 (token expired) ----
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("token");
+        window.location.href = "/login";
+      }
+    }
+    return Promise.reject(error);
   }
-  return "Terjadi kesalahan pada server";
+);
+
+// ---- Helper: parse pesan error dari Axios ----
+export function getErrorMessage(error: unknown): string {
+  if (axios.isAxiosError(error)) {
+    return (
+      error.response?.data?.msg ||
+      error.response?.data?.error ||
+      error.message ||
+      "Terjadi kesalahan."
+    );
+  }
+  if (error instanceof Error) return error.message;
+  return "Terjadi kesalahan yang tidak diketahui.";
 }
 
-/**
- * Login user with email and password
- * @param request - Login credentials (email, password)
- * @returns Promise<LoginResponse> - Token and user data
- * @throws Error if login fails
- */
-export const loginUser = async (
-  request: LoginRequest
-): Promise<LoginResponse> => {
-  try {
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(request),
-    });
+// ---- Helper: baca pagination meta dari response headers ----
+export function parsePaginationHeaders(headers: Record<string, any>): Partial<PaginationMeta> {
+  return {
+    totalCount: Number(headers["x-total-count"] ?? 0),
+    totalPages: Number(headers["x-total-pages"] ?? 1),
+  };
+}
 
-    const data = await res.json();
+// ====================
+// AUTH SERVICES
+// ====================
 
-    if (!res.ok) {
-      throw new Error(data.msg || "Login gagal");
-    }
-
-    return data;
-  } catch (err) {
-    throw new Error(handleApiError(err));
-  }
+export const loginUser = async (request: LoginRequest): Promise<LoginResponse> => {
+  const { data } = await apiClient.post<LoginResponse>("/auth/login", request);
+  return data;
 };
 
-/**
- * Example API call wrapper for future use
- * @template T - Response data type
- * @param endpoint - API endpoint
- * @param options - Fetch options
- * @returns Promise<ApiResponse<T>>
- */
-export const apiCall = async <T,>(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<ApiResponse<T>> => {
-  try {
-    const response = await fetch(endpoint, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-        ...options.headers,
-      },
-      ...options,
-    });
+// ====================
+// PRESENSI SERVICES
+// ====================
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || "API request failed");
-    }
-
+export const presensiService = {
+  getRiwayat: () => apiClient.get("/presensi/riwayat"),
+  getHariIni: async () => {
+    const { data } = await apiClient.get("/presensi/hari-ini");
     return data;
-  } catch (err) {
-    return {
-      success: false,
-      message: handleApiError(err),
-    };
-  }
+  },
+  getAdminAll: (params: { page: number; limit: number; search?: string }) =>
+    apiClient.get("/presensi/admin", { params }),
+  masuk: (payload: { lokasiMasuk?: string }) =>
+    apiClient.post("/presensi/masuk", payload),
+  keluar: (payload: { lokasiKeluar?: string }) =>
+    apiClient.post("/presensi/keluar", payload),
 };
 
-/**
- * Global fetcher for SWR
- */
+// ====================
+// LAPORAN SERVICES
+// ====================
+
+export const laporanService = {
+  getAll: () => apiClient.get("/laporan"),
+  getAdminAll: (params: { page: number; limit: number; search?: string }) =>
+    apiClient.get("/laporan/admin", { params }),
+  upload: (formData: FormData) =>
+    apiClient.post("/laporan", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }),
+  delete: (id: string) => apiClient.delete(`/laporan/${id}`),
+  download: (fileId: string) =>
+    apiClient.get(`/laporan/download/${fileId}`, { responseType: "blob" }),
+  review: (id: string, payload: { status: string; adminCatatan: string }) =>
+    apiClient.put(`/laporan/admin/${id}/review`, payload),
+  reuploadFile: (id: string, formData: FormData) =>
+    apiClient.put(`/laporan/${id}/file`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }),
+};
+
+// ====================
+// FEEDBACK SERVICES
+// ====================
+
+export const feedbackService = {
+  getMyFeedback: () => apiClient.get("/feedback"),
+  send: (payload: { userId: string; feedback: string }) =>
+    apiClient.post("/feedback", payload),
+};
+
+// ====================
+// USER / PESERTA SERVICES
+// ====================
+
+export const userService = {
+  getPesertaList: () => apiClient.get("/users/peserta"),
+  getAdminPeserta: () => apiClient.get("/users/admin/peserta"),
+};
+
+// ====================
+// SWR FETCHER (tetap tersedia untuk backward compatibility)
+// ====================
+
 export const fetcher = async (url: string) => {
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (token) headers.Authorization = `Bearer ${token}`;
-
-  const res = await fetch(url, { headers });
-  
-  if (!res.ok) {
-    const error = new Error("An error occurred while fetching the data.");
-    let info;
-    try {
-      info = await res.json();
-    } catch {
-      info = await res.text();
-    }
-    (error as any).info = info;
-    (error as any).status = res.status;
-    throw error;
-  }
-  
-  return res.json();
+  const { data } = await apiClient.get(url);
+  return data;
 };
-  
+
+// Legacy alias
+export const apiCall = fetcher;

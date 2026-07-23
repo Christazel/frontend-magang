@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -9,30 +9,8 @@ import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { DocumentTextIcon, DocumentArrowUpIcon, DocumentArrowDownIcon, TrashIcon, PencilSquareIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
-
-type ReviewStatus = "pending" | "sesuai" | "revisi";
-
-type LaporanType = {
-  _id: string;
-  judul: string;
-  deskripsi: string;
-  createdAt: string;
-
-  // ✅ dari backend bisa string / object (ObjectId)
-  fileId: any;
-
-  // metadata (opsional)
-  originalName?: string;
-  mimeType?: string;
-  gfsFilename?: string;
-  size?: number;
-
-  // ✅ fitur review admin
-  status?: ReviewStatus;
-  adminCatatan?: string;
-  reviewed?: boolean;
-  reviewedAt?: string | null;
-};
+import { laporanService, getErrorMessage, apiClient } from "@/lib/api";
+import type { Laporan, ReviewStatus } from "@/types";
 
 const MAX_MB = 4;
 const MAX_BYTES = MAX_MB * 1024 * 1024;
@@ -100,8 +78,8 @@ export default function LaporanPesertaPage() {
   const [judul, setJudul] = useState("");
   const [deskripsi, setDeskripsi] = useState("");
 
-  const [laporanList, setLaporanList] = useState<LaporanType[]>([]);
-  const [loadingList, setLoadingList] = useState(false);
+  const [laporanList, setLaporanList] = useState<Laporan[]>([]);
+  const [loadingList, setLoadingList] = useState(true);
 
   const [isUploading, setIsUploading] = useState(false);
 
@@ -115,38 +93,11 @@ export default function LaporanPesertaPage() {
   const [resubmitForId, setResubmitForId] = useState<string | null>(null);
   const [isResubmitting, setIsResubmitting] = useState(false);
 
-  const token = useMemo(() => {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem("token");
-  }, []);
-
-  const authHeaders = useMemo(() => {
-    const h: Record<string, string> = {};
-    if (token) h.Authorization = `Bearer ${token}`;
-    return h;
-  }, [token]);
-
-  const parseErrorMessage = async (res: Response) => {
-    const contentType = res.headers.get("content-type") || "";
-    try {
-      if (contentType.includes("application/json")) {
-        const j = await res.json();
-        return j?.msg || j?.error || `Request gagal (HTTP ${res.status})`;
-      }
-    } catch {}
-    return `Request gagal (HTTP ${res.status})`;
-  };
-
   const getLaporanList = async () => {
-    if (!token) return;
-    setLoadingList(true);
     try {
-      const res = await fetch("/api/laporan", { headers: authHeaders });
-      const data = await res.json();
-
-      if (Array.isArray(data)) setLaporanList(data);
-      else if (Array.isArray(data?.data)) setLaporanList(data.data);
-      else setLaporanList([]);
+      setLoadingList(true);
+      const { data } = await laporanService.getAll();
+      setLaporanList(Array.isArray(data) ? data : []);
     } catch (e) {
       console.error(e);
       setLaporanList([]);
@@ -163,18 +114,11 @@ export default function LaporanPesertaPage() {
     formData.append("judul", judul.trim());
     formData.append("deskripsi", deskripsi.trim());
 
-    const res = await fetch("/api/laporan", {
-      method: "POST",
-      headers: { ...authHeaders },
-      body: formData,
-    });
-
-    if (!res.ok) throw new Error(await parseErrorMessage(res));
+    await laporanService.upload(formData);
   };
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!token) return toast.error("Token tidak ditemukan. Silakan login ulang.");
     if (!file) return toast.error("Pilih file dulu.");
 
     if (file.size > MAX_BYTES) {
@@ -202,74 +146,41 @@ export default function LaporanPesertaPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!token) return toast.error("Token tidak ditemukan. Silakan login ulang.");
-
     const ok = window.confirm("Yakin mau hapus laporan ini?");
     if (!ok) return;
 
-    const res = await fetch(`/api/laporan/${id}`, {
-      method: "DELETE",
-      headers: authHeaders,
-    });
-
-    if (res.ok) {
+    try {
+      await laporanService.delete(id);
       toast.success("Laporan dihapus");
       getLaporanList();
-    } else {
-      toast.error(`Gagal menghapus laporan: ${await parseErrorMessage(res)}`);
+    } catch (error) {
+      toast.error(`Gagal menghapus laporan: ${getErrorMessage(error)}`);
     }
   };
 
   const handleUpdateDeskripsi = async (id: string) => {
-    if (!token) {
-      toast.error("Token tidak ditemukan. Silakan login ulang.");
-      return;
-    }
-
-    const res = await fetch(`/api/laporan/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders,
-      },
-      body: JSON.stringify({ deskripsi: editDeskripsi }),
-    });
-
-    if (res.ok) {
+    try {
+      await apiClient.put(`/laporan/${id}`, { deskripsi: editDeskripsi });
       toast.success("Deskripsi berhasil diperbarui");
       setEditingId(null);
       getLaporanList();
-    } else {
-      toast.error(`Gagal update deskripsi: ${await parseErrorMessage(res)}`);
+    } catch (error) {
+      toast.error(`Gagal update deskripsi: ${getErrorMessage(error)}`);
     }
   };
 
-  const handleDownload = async (lap: LaporanType) => {
+  const handleDownload = async (lap: Laporan) => {
     try {
-      if (!token) {
-        toast.error("Token tidak ditemukan. Silakan login ulang.");
-        return;
-      }
-
       const fileId = normalizeId(lap.fileId);
       if (!fileId) {
         toast.error("FileId tidak ditemukan pada laporan ini.");
         return;
       }
 
-      const res = await fetch(`/api/laporan/download/${fileId}`, {
-        method: "GET",
-        headers: { ...authHeaders },
-      });
+      const res = await laporanService.download(fileId);
+      const blob = new Blob([res.data]);
 
-      if (!res.ok) {
-        toast.error(`Gagal download: ${await parseErrorMessage(res)}`);
-        return;
-      }
-
-      const blob = await res.blob();
-
-      const cd = res.headers.get("content-disposition");
+      const cd = res.headers["content-disposition"] || "";
       const filenameFromHeader = getFilenameFromContentDisposition(cd);
 
       const fallback =
@@ -300,11 +211,6 @@ export default function LaporanPesertaPage() {
   };
 
   const doResubmit = async (laporanId: string, selectedFile: File) => {
-    if (!token) {
-      toast.error("Token tidak ditemukan. Silakan login ulang.");
-      return;
-    }
-
     if (selectedFile.size > MAX_BYTES) {
       toast.error(
         `Ukuran file terlalu besar. Maksimal ${MAX_MB}MB.\nUkuran file kamu: ${bytesToMB(selectedFile.size).toFixed(
@@ -319,16 +225,7 @@ export default function LaporanPesertaPage() {
       const fd = new FormData();
       fd.append("file", selectedFile);
 
-      const res = await fetch(`/api/laporan/${laporanId}/file`, {
-        method: "PUT",
-        headers: { ...authHeaders },
-        body: fd,
-      });
-
-      if (!res.ok) {
-        toast.error(`Gagal upload revisi: ${await parseErrorMessage(res)}`);
-        return;
-      }
+      const res = await laporanService.reuploadFile(laporanId, fd);
 
       toast.success("Upload revisi berhasil! Status laporan kembali ke pending.");
       setResubmitForId(null);
@@ -352,9 +249,9 @@ export default function LaporanPesertaPage() {
   };
 
   useEffect(() => {
-    if (token) getLaporanList();
+    getLaporanList();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, []);
 
   const fileSizeMB = file ? bytesToMB(file.size) : 0;
   const fileTooBig = file ? file.size > MAX_BYTES : false;

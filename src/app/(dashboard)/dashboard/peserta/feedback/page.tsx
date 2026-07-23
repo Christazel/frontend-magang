@@ -7,34 +7,20 @@ import Footer from "@/components/layout/Footer";
 import { ChatBubbleLeftRightIcon, CheckBadgeIcon } from "@heroicons/react/24/outline";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-
-type FeedbackType = {
-  _id: string;
-  feedback: string;
-  createdAt: string;
-};
+import { feedbackService, getErrorMessage } from "@/lib/api";
+import type { Feedback } from "@/types";
 
 export default function FeedbackPesertaPage() {
-  const [feedbackList, setFeedbackList] = useState<FeedbackType[]>([]);
+  const [feedbackList, setFeedbackList] = useState<Feedback[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchFeedback = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch("/api/feedback", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        setFeedbackList(data);
-      } else {
-        setFeedbackList([]);
-      }
+      const { data } = await feedbackService.getMyFeedback();
+      setFeedbackList(Array.isArray(data) ? data : []);
     } catch (e) {
-      console.error(e);
+      console.error(getErrorMessage(e));
       setFeedbackList([]);
     } finally {
       setLoading(false);

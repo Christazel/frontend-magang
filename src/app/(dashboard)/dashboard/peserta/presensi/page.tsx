@@ -3,12 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ClockIcon, CheckCircleIcon, ArrowLeftIcon, MapPinIcon } from "@heroicons/react/24/outline";
-
-interface Presensi {
-  jamMasuk?: string;
-  jamKeluar?: string;
-  lokasi?: string;
-}
+import { presensiService, getErrorMessage } from "@/lib/api";
+import type { Presensi } from "@/types";
 
 type WindowTime = { start: string; end: string };
 
@@ -113,12 +109,8 @@ export default function PresensiPage() {
 
   const fetchPresensiHariIni = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch("/api/presensi/hari-ini", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      if (res.ok) setPresensiHariIni(data);
+      const data = await presensiService.getHariIni();
+      if (data) setPresensiHariIni(data);
     } catch (err) {
       console.error(err);
     }
@@ -164,30 +156,19 @@ export default function PresensiPage() {
 
     setLoading(true);
     try {
-      const token = localStorage.getItem("token");
-      if (!token) throw new Error("Token tidak ditemukan. Silakan login kembali.");
-
       const lokasi = await getLocation();
+      const locStr = `${lokasi.lat.toFixed(6)},${lokasi.lng.toFixed(6)}`;
 
-      const res = await fetch(`/api/presensi/${tipe}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          latitude: Number(lokasi.lat.toFixed(6)),
-          longitude: Number(lokasi.lng.toFixed(6)),
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.msg || "Gagal melakukan presensi");
+      if (tipe === "masuk") {
+        await presensiService.masuk({ lokasiMasuk: locStr });
+      } else {
+        await presensiService.keluar({ lokasiKeluar: locStr });
+      }
 
       setSuccess(`Presensi ${tipe} berhasil dicatat!`);
       fetchPresensiHariIni();
     } catch (err: any) {
-      setError(err.message || "Terjadi kesalahan saat presensi");
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -286,11 +267,11 @@ export default function PresensiPage() {
                   {presensiHariIni?.jamKeluar || "—"}
                 </span>
               </div>
-              {presensiHariIni?.lokasi && (
+              {(presensiHariIni?.lokasiMasuk || presensiHariIni?.lokasiKeluar) && (
                 <div className="flex items-start gap-2 px-4 py-3">
                   <MapPinIcon className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
                   <span className="text-xs text-gray-400 break-all">
-                    {presensiHariIni.lokasi}
+                    {presensiHariIni?.lokasiMasuk || presensiHariIni?.lokasiKeluar}
                   </span>
                 </div>
               )}

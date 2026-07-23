@@ -8,17 +8,8 @@ import Footer from "@/components/layout/Footer";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { UsersIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
-
-// 🔧 Selalu gunakan proxy Vercel
-const API_BASE = "/api";
-
-interface Peserta {
-  _id: string;
-  name: string;
-  email: string;
-  hadir: number;
-  tugas: number;
-}
+import { userService, getErrorMessage } from "@/lib/api";
+import type { Peserta } from "@/types";
 
 // Konfigurasi perhitungan keaktifan
 const TOTAL_HARI = 90; // total hari magang (silakan sesuaikan)
@@ -61,31 +52,11 @@ export default function ManajemenPesertaPage() {
     try {
       setLoading(true);
       setError("");
-
-      const token =
-        typeof window !== "undefined" ? localStorage.getItem("token") : null;
-      if (!token) {
-        setError("Token tidak ditemukan, silakan login ulang.");
-        setLoading(false);
-        return;
-      }
-
-      const res = await fetch(`${API_BASE}/users/admin/peserta`, {
-        headers: { Authorization: `Bearer ${token}` },
-        cache: "no-store",
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data?.msg || "Gagal mengambil data peserta.");
-        setLoading(false);
-        return;
-      }
-
+      const { data } = await userService.getAdminPeserta();
       setPeserta(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("❌ fetchPeserta error:", err);
-      setError("Terjadi kesalahan saat mengambil data peserta.");
+      console.error(err);
+      setError(getErrorMessage(err) || "Gagal mengambil data peserta.");
     } finally {
       setLoading(false);
     }
