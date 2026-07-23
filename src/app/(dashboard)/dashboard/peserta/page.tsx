@@ -32,18 +32,8 @@ ChartJS.register(
   Title
 );
 
-// 🔧 Selalu gunakan proxy Vercel
-const API_BASE = "/api";
-
-type Presensi = {
-  _id: string;
-  tanggal: string; // YYYY-MM-DD
-  jamMasuk?: string; // HH:mm:ss
-  jamKeluar?: string; // HH:mm:ss
-  lokasiMasuk?: string;
-  lokasiKeluar?: string;
-  keterangan?: "hadir" | "izin" | "sakit";
-};
+import { presensiService, getErrorMessage } from "@/lib/api";
+import type { Presensi } from "@/types";
 
 export default function PesertaDashboard() {
   const { user } = useAuth();
@@ -57,27 +47,11 @@ export default function PesertaDashboard() {
     setLoading(true);
     setError("");
     try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
-      const res = await fetch(`${API_BASE}/presensi/riwayat`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (res.status === 401) {
-        localStorage.removeItem("token");
-        window.location.href = "/login";
-        return;
-      }
-
-      const data: Presensi[] = await res.json();
-      if (!res.ok) {
-        setError((data as any)?.msg || "Gagal mengambil data presensi");
-        return;
-      }
+      const { data } = await presensiService.getRiwayat();
+      const presensiData: Presensi[] = Array.isArray(data) ? data : [];
 
       const count = { hadir: 0, sakit: 0, izin: 0 };
-      data.forEach((item) => {
+      presensiData.forEach((item) => {
         if (item.jamMasuk) count.hadir++;
         else if (item.keterangan === "izin") count.izin++;
         else if (item.keterangan === "sakit") count.sakit++;
@@ -86,7 +60,7 @@ export default function PesertaDashboard() {
       setStats(count);
     } catch (_err) {
       console.error("❌ Gagal mengambil data presensi:", _err);
-      setError("Terjadi kesalahan saat mengambil data presensi.");
+      setError(getErrorMessage(_err));
     } finally {
       setLoading(false);
     }

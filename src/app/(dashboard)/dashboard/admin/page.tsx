@@ -8,6 +8,7 @@ import { Users, FileText, TrendingUp, Activity } from "lucide-react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/api";
 import { Card, CardHeader, CardBody, StatCard } from "@/components/ui/Card";
+import type { Peserta } from "@/types";
 
 // Chart.js
 import {
@@ -37,14 +38,6 @@ ChartJS.register(
 const TOTAL_HARI = 90; // total hari magang (silakan sesuaikan)
 const TOTAL_TUGAS = 10; // jumlah tugas target
 
-type PesertaStats = {
-  _id: string;
-  name: string;
-  email: string;
-  hadir: number;
-  tugas: number;
-};
-
 function hitungKeaktifan(hadir: number, tugas: number): number {
   const hadirScore = TOTAL_HARI > 0 ? hadir / TOTAL_HARI : 0; // 0..1
   const tugasScore = TOTAL_TUGAS > 0 ? tugas / TOTAL_TUGAS : 0; // 0..1
@@ -55,7 +48,7 @@ function hitungKeaktifan(hadir: number, tugas: number): number {
 
 export default function AdminDashboard() {
   const { user } = useAuth();
-  const { data: pesertaData, error: errorPeserta, isLoading: loadingPeserta } = useSWR<PesertaStats[]>("/api/users/admin/peserta", fetcher);
+  const { data: pesertaData, error: errorPeserta, isLoading: loadingPeserta } = useSWR<Peserta[]>("/api/users/admin/peserta", fetcher);
   const { data: laporanData, error: errorLaporan, isLoading: loadingLaporan } = useSWR<any[]>("/api/laporan/admin", fetcher);
 
   const loading = loadingPeserta || loadingLaporan;

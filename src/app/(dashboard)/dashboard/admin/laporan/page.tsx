@@ -8,30 +8,10 @@ import toast from "react-hot-toast";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Pagination } from "@/components/ui/Pagination";
 import { DocumentTextIcon, ArrowPathIcon, DocumentArrowDownIcon, CheckBadgeIcon } from "@heroicons/react/24/outline";
-
-const API_BASE = "/api";
-
-type ReviewStatus = "pending" | "sesuai" | "revisi";
-
-type LaporanAdmin = {
-  _id: string;
-  judul: string;
-  deskripsi: string;
-  createdAt: string;
-  fileId: any;
-  user: {
-    name: string;
-    email: string;
-  };
-  status?: ReviewStatus;
-  adminCatatan?: string;
-  reviewed?: boolean;
-  reviewedBy?: any;
-  reviewedAt?: string | null;
-};
-
-type SortOption = "terbaru" | "terlama";
+import { laporanService, getErrorMessage, parsePaginationHeaders } from "@/lib/api";
+import type { Laporan, ReviewStatus, SortOption } from "@/types";
 
 const fmtTanggal = (iso: string) =>
   new Date(iso).toLocaleDateString("id-ID", {
@@ -67,17 +47,6 @@ function normalizeFileId(fileId: any): string | null {
   return null;
 }
 
-async function parseErrorMessage(res: Response) {
-  const ct = res.headers.get("content-type") || "";
-  try {
-    if (ct.includes("application/json")) {
-      const j = await res.json();
-      return j?.msg || j?.error || `Request gagal (HTTP ${res.status})`;
-    }
-  } catch {}
-  return `Request gagal (HTTP ${res.status})`;
-}
-
 function StatusBadge({ status }: { status?: ReviewStatus }) {
   const s: ReviewStatus = status ?? "pending";
   const base = "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border whitespace-nowrap";
@@ -92,6 +61,18 @@ function StatusBadge({ status }: { status?: ReviewStatus }) {
   return <span className={`${base} ${cls}`}>{label}</span>;
 }
 
+interface ReviewModalProps {
+  open: boolean;
+  row: Laporan | null;
+  status: ReviewStatus;
+  catatan: string;
+  saving: boolean;
+  onClose: () => void;
+  onChangeStatus: (s: ReviewStatus) => void;
+  onChangeCatatan: (c: string) => void;
+  onSubmit: () => void;
+}
+
 function ReviewModal({
   open,
   row,
@@ -102,17 +83,7 @@ function ReviewModal({
   onChangeStatus,
   onChangeCatatan,
   onSubmit,
-}: {
-  open: boolean;
-  row: LaporanAdmin | null;
-  status: ReviewStatus;
-  catatan: string;
-  saving: boolean;
-  onClose: () => void;
-  onChangeStatus: (v: ReviewStatus) => void;
-  onChangeCatatan: (v: string) => void;
-  onSubmit: () => void;
-}) {
+}: ReviewModalProps) {
   const areaRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
@@ -194,8 +165,8 @@ function ReviewModal({
   );
 }
 
-export default function RekapLaporanTugasAdminPage() {
-  const [data, setData] = useState<LaporanAdmin[]>([]);
+export default function RekapLaporanAdminPage() {
+  const [data, setData] = useState<Laporan[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState("");
@@ -209,8 +180,6 @@ export default function RekapLaporanTugasAdminPage() {
 
   const debounceRef = useRef<number | null>(null);
   const [debouncedSearch, setDebouncedSearch] = useState("");
-
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
   useEffect(() => {
     if (debounceRef.current) window.clearTimeout(debounceRef.current);
@@ -226,41 +195,25 @@ export default function RekapLaporanTugasAdminPage() {
   const fetchLaporanAdmin = useCallback(async (silent = false) => {
     try {
       setLoading(true);
-      if (!token) {
-        setData([]);
-        toast.error("Token tidak ditemukan. Silakan login ulang.");
-        return;
-      }
-      const params = new URLSearchParams({
-        page: String(page),
-        limit: String(rowsPerPage),
-      });
-      if (debouncedSearch) params.set("search", debouncedSearch);
-
-      const res = await fetch(`${API_BASE}/laporan/admin?${params.toString()}`, {
-        headers: { Authorization: `Bearer ${token}` },
-        cache: "no-store",
+      const res = await laporanService.getAdminAll({
+        page,
+        limit: rowsPerPage,
+        search: debouncedSearch || undefined,
       });
 
-      const json = await res.json();
-      if (!res.ok) {
-        setData([]);
-        toast.error(json?.msg || "Gagal mengambil data laporan.");
-        return;
-      }
-
-      setTotalCount(Number(res.headers.get("X-Total-Count") ?? 0));
-      setTotalPages(Number(res.headers.get("X-Total-Pages") ?? 1));
-      setData(Array.isArray(json) ? json : []);
+      const meta = parsePaginationHeaders(res.headers);
+      setTotalCount(meta.totalCount || 0);
+      setTotalPages(meta.totalPages || 1);
+      setData(Array.isArray(res.data) ? res.data : []);
       if (!silent) toast.success("Data laporan berhasil dimuat.");
     } catch (e) {
       console.error(e);
       setData([]);
-      toast.error("Terjadi kesalahan saat mengambil data.");
+      toast.error(getErrorMessage(e) || "Terjadi kesalahan saat mengambil data.");
     } finally {
       setLoading(false);
     }
-  }, [token, page, debouncedSearch]);
+  }, [page, debouncedSearch, rowsPerPage]);
 
   useEffect(() => {
     fetchLaporanAdmin(true);
@@ -315,8 +268,7 @@ export default function RekapLaporanTugasAdminPage() {
 
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
-  const handleDownload = async (row: LaporanAdmin) => {
-    if (!token) return toast.error("Token tidak tersedia. Silakan login ulang.");
+  const handleDownload = async (row: Laporan) => {
     const fileId = normalizeFileId(row.fileId);
     if (!fileId) return toast.error("fileId tidak ditemukan pada data laporan.");
 
@@ -324,18 +276,10 @@ export default function RekapLaporanTugasAdminPage() {
     const tId = toast.loading("Menyiapkan file untuk diunduh...");
 
     try {
-      const res = await fetch(`${API_BASE}/laporan/download/${fileId}`, {
-        method: "GET",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) {
-        toast.dismiss(tId);
-        toast.error(await parseErrorMessage(res));
-        return;
-      }
-      const blob = await res.blob();
-      const cd = res.headers.get("content-disposition") || "";
+      const res = await laporanService.download(fileId);
+      const blob = new Blob([res.data]);
+      
+      const cd = res.headers["content-disposition"] || "";
       let filename = "";
       const match = cd.match(/filename="([^"]+)"/i);
       if (match?.[1]) filename = match[1];
@@ -363,12 +307,12 @@ export default function RekapLaporanTugasAdminPage() {
   };
 
   const [reviewOpen, setReviewOpen] = useState(false);
-  const [reviewRow, setReviewRow] = useState<LaporanAdmin | null>(null);
+  const [reviewRow, setReviewRow] = useState<Laporan | null>(null);
   const [reviewStatus, setReviewStatus] = useState<ReviewStatus>("pending");
   const [reviewCatatan, setReviewCatatan] = useState("");
   const [savingReview, setSavingReview] = useState(false);
 
-  const openReview = (row: LaporanAdmin) => {
+  const openReview = (row: Laporan) => {
     setReviewRow(row);
     setReviewStatus((row.status ?? "pending") as ReviewStatus);
     setReviewCatatan(row.adminCatatan ?? "");
@@ -384,38 +328,27 @@ export default function RekapLaporanTugasAdminPage() {
   };
 
   const submitReview = async () => {
-    if (!token) return toast.error("Token tidak tersedia. Silakan login ulang.");
     if (!reviewRow?._id) return;
 
     setSavingReview(true);
     try {
-      const res = await fetch(`${API_BASE}/laporan/admin/${reviewRow._id}/review`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          status: reviewStatus,
-          adminCatatan: reviewCatatan,
-        }),
-      });
+      const payload = {
+        status: reviewStatus,
+        adminCatatan: reviewCatatan,
+      };
+      
+      const res = await laporanService.review(reviewRow._id, payload);
 
-      if (!res.ok) {
-        toast.error(await parseErrorMessage(res));
-        return;
-      }
-      const payload = await res.json().catch(() => null);
       setData((prev) =>
         prev.map((x) => {
           if (x._id !== reviewRow._id) return x;
-          const next: LaporanAdmin = {
+          const next: Laporan = {
             ...x,
             status: reviewStatus,
             adminCatatan: reviewCatatan,
             reviewed: reviewStatus !== "pending",
-            reviewedBy: payload?.laporan?.reviewedBy ?? x.reviewedBy,
-            reviewedAt: payload?.laporan?.reviewedAt ?? new Date().toISOString(),
+            reviewedBy: res.data?.laporan?.reviewedBy ?? x.reviewedBy,
+            reviewedAt: res.data?.laporan?.reviewedAt ?? new Date().toISOString(),
           };
           return next;
         })
@@ -424,7 +357,7 @@ export default function RekapLaporanTugasAdminPage() {
       closeReview();
     } catch (e) {
       console.error(e);
-      toast.error("Gagal menyimpan penilaian. Coba lagi.");
+      toast.error(getErrorMessage(e) || "Gagal menyimpan penilaian. Coba lagi.");
     } finally {
       setSavingReview(false);
     }
@@ -574,16 +507,14 @@ export default function RekapLaporanTugasAdminPage() {
 
             {/* Pagination Controls */}
             {!loading && paged.length > 0 && (
-              <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row items-center justify-between gap-4 rounded-b-2xl">
-                <p className="text-sm font-medium text-gray-600">
-                  Menampilkan <span className="text-gray-900">{totalCount === 0 ? 0 : (page - 1) * rowsPerPage + 1}</span> hingga <span className="text-gray-900">{Math.min(page * rowsPerPage, totalCount)}</span> dari <span className="text-gray-900">{totalCount}</span> laporan
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button variant="secondary" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}>Sebelumnya</Button>
-                  <span className="text-sm font-semibold text-gray-700 px-2">{page} / {totalPages}</span>
-                  <Button variant="secondary" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>Selanjutnya</Button>
-                </div>
-              </div>
+              <Pagination
+                page={page}
+                totalPages={totalPages}
+                totalCount={totalCount}
+                rowsPerPage={rowsPerPage}
+                onPageChange={setPage}
+                itemName="laporan"
+              />
             )}
           </Card>
         </main>
