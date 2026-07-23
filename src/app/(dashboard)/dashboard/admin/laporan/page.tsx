@@ -4,6 +4,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import toast from "react-hot-toast";
+import { Card, CardBody } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { DocumentTextIcon, ArrowPathIcon, DocumentArrowDownIcon, CheckBadgeIcon } from "@heroicons/react/24/outline";
 
 const API_BASE = "/api";
 
@@ -19,8 +24,6 @@ type LaporanAdmin = {
     name: string;
     email: string;
   };
-
-  // ✅ tambahan fitur review
   status?: ReviewStatus;
   adminCatatan?: string;
   reviewed?: boolean;
@@ -53,7 +56,6 @@ const csvEscape = (v: unknown) => {
 function normalizeFileId(fileId: any): string | null {
   if (!fileId) return null;
   if (typeof fileId === "string") return fileId;
-
   if (typeof fileId === "object") {
     if (typeof fileId._id === "string") return fileId._id;
     if (typeof fileId.$oid === "string") return fileId.$oid;
@@ -76,122 +78,15 @@ async function parseErrorMessage(res: Response) {
   return `Request gagal (HTTP ${res.status})`;
 }
 
-type ToastType = "success" | "error" | "info";
-function Toast({
-  open,
-  type,
-  message,
-  onClose,
-}: {
-  open: boolean;
-  type: ToastType;
-  message: string;
-  onClose: () => void;
-}) {
-  if (!open) return null;
-
-  const base =
-    "fixed top-4 right-4 z-[9999] w-[92vw] max-w-sm rounded-2xl shadow-lg border px-4 py-3";
-  const theme =
-    type === "success"
-      ? "bg-green-50 border-green-200 text-green-800"
-      : type === "error"
-      ? "bg-red-50 border-red-200 text-red-800"
-      : "bg-blue-50 border-blue-200 text-blue-800";
-
-  return (
-    <div className={`${base} ${theme}`}>
-      <div className="flex gap-3 items-start">
-        <div className="flex-1 text-sm leading-relaxed">{message}</div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="text-sm font-semibold opacity-70 hover:opacity-100"
-          aria-label="Tutup notifikasi"
-          title="Tutup"
-        >
-          ✕
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function IconRefresh({ spinning }: { spinning?: boolean }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={`h-5 w-5 ${spinning ? "animate-spin" : ""}`}
-      aria-hidden="true"
-    >
-      <path d="M21 12a9 9 0 1 1-3-6.7" />
-      <path d="M21 3v7h-7" />
-    </svg>
-  );
-}
-
-function IconDownload({ spinning }: { spinning?: boolean }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={`h-4 w-4 ${spinning ? "animate-spin" : ""}`}
-      aria-hidden="true"
-    >
-      {spinning ? (
-        <>
-          <path d="M21 12a9 9 0 1 1-3-6.7" />
-          <path d="M21 3v7h-7" />
-        </>
-      ) : (
-        <>
-          <path d="M12 3v12" />
-          <path d="M7 10l5 5 5-5" />
-          <path d="M5 21h14" />
-        </>
-      )}
-    </svg>
-  );
-}
-
-function IconCheck() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      className="h-4 w-4"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M20 6 9 17l-5-5" />
-    </svg>
-  );
-}
-
 function StatusBadge({ status }: { status?: ReviewStatus }) {
   const s: ReviewStatus = status ?? "pending";
-  const base = "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border whitespace-nowrap";
+  const base = "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border whitespace-nowrap";
   const cls =
     s === "sesuai"
-      ? "bg-green-50 text-green-700 border-green-200"
+      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
       : s === "revisi"
-      ? "bg-amber-50 text-amber-800 border-amber-200"
-      : "bg-gray-50 text-gray-700 border-gray-200";
+      ? "bg-rose-50 text-rose-700 border-rose-200"
+      : "bg-gray-100 text-gray-600 border-gray-200";
 
   const label = s === "sesuai" ? "Sesuai" : s === "revisi" ? "Revisi" : "Pending";
   return <span className={`${base} ${cls}`}>{label}</span>;
@@ -222,15 +117,11 @@ function ReviewModal({
 
   useEffect(() => {
     if (!open) return;
-
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
-
-    // fokus ke textarea biar cepat ngetik
     window.setTimeout(() => areaRef.current?.focus(), 50);
-
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
@@ -238,119 +129,65 @@ function ReviewModal({
 
   return (
     <div className="fixed inset-0 z-[9998] flex items-center justify-center px-3 sm:px-4">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-
-      <div className="relative w-full max-w-xl rounded-2xl bg-white border border-gray-200 shadow-xl">
-        <div className="p-4 sm:p-5 border-b border-gray-100">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h2 className="text-base sm:text-lg font-semibold text-gray-900">
-                Nilai Laporan Peserta
-              </h2>
-              <p className="mt-1 text-sm text-gray-600">
-                <span className="font-medium text-gray-800">{row.user?.name}</span>{" "}
-                <span className="text-gray-500">({row.user?.email})</span>
-              </p>
-              <p className="mt-1 text-sm text-gray-700 break-words">
-                <span className="text-gray-500">Judul:</span>{" "}
-                <span className="font-medium">{row.judul}</span>
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-3 py-1.5 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-700"
-              title="Tutup"
-              aria-label="Tutup"
-            >
-              ✕
-            </button>
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-xl rounded-2xl bg-white shadow-xl flex flex-col">
+        <div className="p-4 sm:p-5 border-b border-gray-100 flex items-start justify-between">
+          <div className="min-w-0">
+            <h2 className="text-base sm:text-lg font-bold text-gray-900">Nilai Laporan Peserta</h2>
+            <p className="mt-1 text-sm text-gray-600">
+              <span className="font-semibold text-teal-800">{row.user?.name}</span> <span className="text-gray-400">({row.user?.email})</span>
+            </p>
           </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-500 transition-colors"
+          >
+            ✕
+          </button>
         </div>
-
         <div className="p-4 sm:p-5 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium text-gray-700">Status penilaian</label>
+              <label className="text-sm font-semibold text-gray-700 block mb-1.5">Status Penilaian</label>
               <select
                 value={status}
                 onChange={(e) => onChangeStatus(e.target.value as ReviewStatus)}
-                className="
-                  mt-1 w-full p-2.5 rounded-xl shadow-sm font-medium
-                  bg-white text-gray-800
-                  border border-gray-300
-                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                  hover:border-gray-400
-                "
+                className="w-full text-sm p-2.5 rounded-xl bg-white border border-gray-200 text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-colors"
               >
-                <option value="pending">Pending (belum dinilai)</option>
+                <option value="pending">Pending (Belum Dinilai)</option>
                 <option value="sesuai">Sesuai</option>
                 <option value="revisi">Revisi</option>
               </select>
-
-              <div className="mt-2">
-                <StatusBadge status={status} />
-              </div>
+              <div className="mt-2"><StatusBadge status={status} /></div>
             </div>
-
             <div className="sm:text-right">
-              <label className="text-sm font-medium text-gray-700 block">Tanggal upload</label>
-              <div className="mt-1 inline-flex items-center justify-end">
-                <span className="text-xs bg-gray-50 border border-gray-200 text-gray-700 px-2.5 py-1 rounded-full">
+              <label className="text-sm font-semibold text-gray-700 block mb-1.5">Tanggal Upload</label>
+              <div className="mt-1 inline-flex justify-end">
+                <span className="text-xs bg-teal-50 text-teal-700 border border-teal-100 px-3 py-1.5 rounded-full font-medium">
                   {fmtTanggal(row.createdAt)}
                 </span>
               </div>
-
-              <p className="mt-2 text-xs text-gray-500">
-                Jika <b>Revisi</b>, tulis catatan yang jelas agar peserta bisa perbaiki lalu upload ulang.
-              </p>
             </div>
           </div>
-
           <div>
-            <label className="text-sm font-medium text-gray-700">Catatan admin</label>
+            <label className="text-sm font-semibold text-gray-700 block mb-1.5">Catatan Admin</label>
             <textarea
               ref={areaRef}
               value={catatan}
               onChange={(e) => onChangeCatatan(e.target.value)}
-              placeholder="Contoh: Cover belum sesuai, tambahkan tanda tangan pembimbing..."
-              rows={5}
-              className="
-                mt-1 w-full p-3 rounded-xl shadow-sm
-                bg-white text-gray-800 placeholder:text-gray-500
-                border border-gray-300
-                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                hover:border-gray-400
-              "
+              placeholder="Contoh: Lampirkan tanda tangan pembimbing di bagian penutup..."
+              rows={4}
+              className="w-full text-sm p-3 rounded-xl bg-white border border-gray-200 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-colors resize-none"
             />
-            <p className="mt-1 text-xs text-gray-500">
-              Catatan ini akan terlihat oleh peserta pada halaman laporan.
+            <p className="mt-1.5 text-[11px] text-gray-500 font-medium">
+              Jika Revisi, berikan petunjuk yang jelas. Catatan ini akan terbaca oleh peserta.
             </p>
           </div>
         </div>
-
-        <div className="p-4 sm:p-5 border-t border-gray-100 flex flex-col sm:flex-row gap-2 sm:justify-end">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={saving}
-            className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 text-gray-800 disabled:opacity-60"
-          >
-            Batal
-          </button>
-
-          <button
-            type="button"
-            onClick={onSubmit}
-            disabled={saving}
-            className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-white transition ${
-              saving ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
-            }`}
-          >
-            <IconCheck />
-            <span className="text-sm font-medium">{saving ? "Menyimpan..." : "Simpan Penilaian"}</span>
-          </button>
+        <div className="p-4 sm:p-5 border-t border-gray-100 bg-gray-50/50 flex flex-col-reverse sm:flex-row justify-end gap-3 rounded-b-2xl">
+          <Button variant="secondary" onClick={onClose} disabled={saving}>Batal</Button>
+          <Button onClick={onSubmit} disabled={saving} isLoading={saving} leftIcon={<CheckBadgeIcon className="w-5 h-5"/>}>Simpan Penilaian</Button>
         </div>
       </div>
     </div>
@@ -367,28 +204,11 @@ export default function RekapLaporanTugasAdminPage() {
 
   const [page, setPage] = useState(1);
   const rowsPerPage = 10;
-
-  // Pagination metadata dari server headers
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
 
-  // debounce search
   const debounceRef = useRef<number | null>(null);
   const [debouncedSearch, setDebouncedSearch] = useState("");
-
-  // toast
-  const [toastOpen, setToastOpen] = useState(false);
-  const [toastType, setToastType] = useState<ToastType>("info");
-  const [toastMsg, setToastMsg] = useState("");
-  const toastTimerRef = useRef<number | null>(null);
-
-  const showToast = (type: ToastType, message: string, ms = 2400) => {
-    setToastType(type);
-    setToastMsg(message);
-    setToastOpen(true);
-    if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
-    toastTimerRef.current = window.setTimeout(() => setToastOpen(false), ms);
-  };
 
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
@@ -398,23 +218,19 @@ export default function RekapLaporanTugasAdminPage() {
       setDebouncedSearch(search.trim());
       setPage(1);
     }, 400);
-
     return () => {
       if (debounceRef.current) window.clearTimeout(debounceRef.current);
     };
   }, [search]);
 
-  // ✅ Fetch data dari server dengan search & pagination — bukan filter di browser
   const fetchLaporanAdmin = useCallback(async (silent = false) => {
     try {
       setLoading(true);
-
       if (!token) {
         setData([]);
-        showToast("error", "Token tidak ditemukan. Silakan login ulang.");
+        toast.error("Token tidak ditemukan. Silakan login ulang.");
         return;
       }
-
       const params = new URLSearchParams({
         page: String(page),
         limit: String(rowsPerPage),
@@ -429,30 +245,27 @@ export default function RekapLaporanTugasAdminPage() {
       const json = await res.json();
       if (!res.ok) {
         setData([]);
-        showToast("error", json?.msg || "Gagal mengambil data laporan.");
+        toast.error(json?.msg || "Gagal mengambil data laporan.");
         return;
       }
 
-      // ✅ Ambil metadata paginasi dari response headers
       setTotalCount(Number(res.headers.get("X-Total-Count") ?? 0));
       setTotalPages(Number(res.headers.get("X-Total-Pages") ?? 1));
       setData(Array.isArray(json) ? json : []);
-      if (!silent) showToast("success", "Data laporan berhasil dimuat.");
+      if (!silent) toast.success("Data laporan berhasil dimuat.");
     } catch (e) {
       console.error(e);
       setData([]);
-      showToast("error", "Terjadi kesalahan saat mengambil data.");
+      toast.error("Terjadi kesalahan saat mengambil data.");
     } finally {
       setLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, page, debouncedSearch]);
 
   useEffect(() => {
     fetchLaporanAdmin(true);
   }, [fetchLaporanAdmin]);
 
-  // Client-side: filter tanggal dan sort hanya pada data yang sudah diterima dari server
   const filtered = data
     .filter((x) => {
       if (!tanggal) return true;
@@ -473,7 +286,7 @@ export default function RekapLaporanTugasAdminPage() {
     setTanggal("");
     setSortBy("terbaru");
     setPage(1);
-    showToast("info", "Filter direset.");
+    toast.success("Filter direset.");
   };
 
   const exportCSV = () => {
@@ -487,10 +300,8 @@ export default function RekapLaporanTugasAdminPage() {
       csvEscape(x.status ?? "pending"),
       csvEscape(x.adminCatatan ?? ""),
     ]);
-
     const csv = [header, ...rows].map((r) => r.join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -499,20 +310,18 @@ export default function RekapLaporanTugasAdminPage() {
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
-
-    showToast("success", "CSV berhasil diekspor.");
+    toast.success("CSV berhasil diekspor.");
   };
 
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   const handleDownload = async (row: LaporanAdmin) => {
-    if (!token) return showToast("error", "Token tidak tersedia. Silakan login ulang.");
-
+    if (!token) return toast.error("Token tidak tersedia. Silakan login ulang.");
     const fileId = normalizeFileId(row.fileId);
-    if (!fileId) return showToast("error", "fileId tidak ditemukan pada data laporan.");
+    if (!fileId) return toast.error("fileId tidak ditemukan pada data laporan.");
 
     setDownloadingId(row._id);
-    showToast("info", "Menyiapkan file untuk diunduh...");
+    const tId = toast.loading("Menyiapkan file untuk diunduh...");
 
     try {
       const res = await fetch(`${API_BASE}/laporan/download/${fileId}`, {
@@ -521,23 +330,19 @@ export default function RekapLaporanTugasAdminPage() {
       });
 
       if (!res.ok) {
-        const msg = await parseErrorMessage(res);
-        showToast("error", msg);
+        toast.dismiss(tId);
+        toast.error(await parseErrorMessage(res));
         return;
       }
-
       const blob = await res.blob();
-
       const cd = res.headers.get("content-disposition") || "";
       let filename = "";
       const match = cd.match(/filename="([^"]+)"/i);
       if (match?.[1]) filename = match[1];
-
       if (!filename) {
         const safeTitle = (row.judul || "laporan").replace(/[\\/:*?"<>|]+/g, "-");
         filename = `${safeTitle}.pdf`;
       }
-
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -546,19 +351,17 @@ export default function RekapLaporanTugasAdminPage() {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-
-      showToast("success", "Download berhasil.");
+      toast.dismiss(tId);
+      toast.success("Download berhasil.");
     } catch (e) {
       console.error(e);
-      showToast("error", "Gagal download file. Coba lagi.");
+      toast.dismiss(tId);
+      toast.error("Gagal download file. Coba lagi.");
     } finally {
       setDownloadingId(null);
     }
   };
 
-  // =========================
-  // ✅ REVIEW ADMIN (modal)
-  // =========================
   const [reviewOpen, setReviewOpen] = useState(false);
   const [reviewRow, setReviewRow] = useState<LaporanAdmin | null>(null);
   const [reviewStatus, setReviewStatus] = useState<ReviewStatus>("pending");
@@ -581,7 +384,7 @@ export default function RekapLaporanTugasAdminPage() {
   };
 
   const submitReview = async () => {
-    if (!token) return showToast("error", "Token tidak tersedia. Silakan login ulang.");
+    if (!token) return toast.error("Token tidak tersedia. Silakan login ulang.");
     if (!reviewRow?._id) return;
 
     setSavingReview(true);
@@ -599,18 +402,13 @@ export default function RekapLaporanTugasAdminPage() {
       });
 
       if (!res.ok) {
-        const msg = await parseErrorMessage(res);
-        showToast("error", msg);
+        toast.error(await parseErrorMessage(res));
         return;
       }
-
-      // server mengembalikan laporan (populated), tapi biar aman kita update minimal di state
       const payload = await res.json().catch(() => null);
-
       setData((prev) =>
         prev.map((x) => {
           if (x._id !== reviewRow._id) return x;
-
           const next: LaporanAdmin = {
             ...x,
             status: reviewStatus,
@@ -622,21 +420,18 @@ export default function RekapLaporanTugasAdminPage() {
           return next;
         })
       );
-
-      showToast("success", "Penilaian laporan berhasil disimpan.");
+      toast.success("Penilaian laporan berhasil disimpan.");
       closeReview();
     } catch (e) {
       console.error(e);
-      showToast("error", "Gagal menyimpan penilaian. Coba lagi.");
+      toast.error("Gagal menyimpan penilaian. Coba lagi.");
     } finally {
       setSavingReview(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen w-full bg-gray-100 overflow-x-hidden">
-      <Toast open={toastOpen} type={toastType} message={toastMsg} onClose={() => setToastOpen(false)} />
-
+    <div className="flex min-h-screen bg-gray-50/50">
       <ReviewModal
         open={reviewOpen}
         row={reviewRow}
@@ -648,366 +443,150 @@ export default function RekapLaporanTugasAdminPage() {
         onChangeCatatan={setReviewCatatan}
         onSubmit={submitReview}
       />
-
       <Sidebar />
-
-      <div className="flex-1 md:ml-64 flex flex-col w-full min-w-0">
+      <div className="flex-1 md:ml-64 flex flex-col min-w-0">
         <Navbar />
-
-        <main className="flex-1 mt-14 px-3 sm:px-4 lg:px-8 py-6 w-full min-w-0">
-          <div className="mx-auto w-full max-w-7xl space-y-4">
-            {/* Header */}
-            <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div>
-                  <h1 className="text-lg sm:text-xl font-semibold text-gray-900">Rekap Laporan Tugas</h1>
-                  <p className="text-gray-600 mt-1 text-sm sm:text-base">
-                    Pantau, nilai, dan unduh laporan yang diunggah peserta.
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100 px-3 py-1.5 rounded-full">
-                    Total: {totalCount}
-                  </span>
-
-                  <button
-                    type="button"
-                    onClick={() => fetchLaporanAdmin(false)}
-                    disabled={loading}
-                    title="Refresh"
-                    aria-label="Refresh"
-                    className={`p-2.5 rounded-xl text-white transition focus:outline-none focus:ring-2 focus:ring-blue-300 ${
-                      loading ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
-                    }`}
-                  >
-                    <IconRefresh spinning={loading} />
-                  </button>
-                </div>
+        <main className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-teal-100 rounded-xl">
+                <DocumentTextIcon className="w-6 h-6 text-teal-700" />
+              </div>
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Rekap Laporan Tugas</h1>
+                <p className="text-sm text-gray-500">Pantau dan nilai laporan dari seluruh peserta</p>
               </div>
             </div>
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:flex px-3 py-1.5 rounded-lg bg-teal-50 border border-teal-100 items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
+                <span className="text-xs font-semibold text-teal-700">Total: {totalCount} Laporan</span>
+              </div>
+              <Button variant="secondary" size="sm" onClick={() => fetchLaporanAdmin(false)} disabled={loading} leftIcon={<ArrowPathIcon className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`}/>}>Refresh</Button>
+            </div>
+          </div>
 
-            {/* Filter */}
-            <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100">
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-                <div className="md:col-span-6">
-                  <label className="text-sm font-medium text-gray-700">Cari laporan</label>
-                  <input
-                    type="text"
-                    placeholder="Cari nama, email, atau judul tugas..."
+          <Card className="mb-6">
+            <CardBody className="p-5">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                <div className="md:col-span-5">
+                  <Input
+                    label="Pencarian"
+                    placeholder="Cari nama, email, judul..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="
-                      mt-1 w-full p-2.5 rounded-xl shadow-sm
-                      bg-white text-gray-800 placeholder:text-gray-500
-                      border border-gray-300
-                      focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                      hover:border-gray-400
-                    "
                   />
                 </div>
-
                 <div className="md:col-span-3">
-                  <label className="text-sm font-medium text-gray-700">Tanggal upload</label>
+                  <label className="text-sm font-semibold text-gray-700 block mb-1.5">Tanggal Upload</label>
                   <input
                     type="date"
                     value={tanggal}
-                    onChange={(e) => {
-                      setTanggal(e.target.value);
-                      setPage(1);
-                    }}
-                    className="
-                      mt-1 w-full p-2.5 rounded-xl shadow-sm
-                      bg-white text-gray-800
-                      border border-gray-300
-                      focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                      hover:border-gray-400
-                    "
+                    onChange={(e) => { setTanggal(e.target.value); setPage(1); }}
+                    className="w-full text-sm p-2.5 rounded-xl bg-white border border-gray-200 text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-colors"
                   />
                 </div>
-
-                <div className="md:col-span-3">
-                  <label className="text-sm font-medium text-gray-700">Urutkan</label>
+                <div className="md:col-span-2">
+                  <label className="text-sm font-semibold text-gray-700 block mb-1.5">Urutkan</label>
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as SortOption)}
-                    className="
-                      mt-1 w-full p-2.5 rounded-xl shadow-sm font-medium
-                      bg-white text-gray-800
-                      border border-gray-300
-                      focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                      hover:border-gray-400
-                    "
+                    className="w-full text-sm p-2.5 rounded-xl bg-white border border-gray-200 text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-colors"
                   >
-                    <option value="terbaru">Tanggal terbaru</option>
-                    <option value="terlama">Tanggal terlama</option>
+                    <option value="terbaru">Terbaru</option>
+                    <option value="terlama">Terlama</option>
                   </select>
                 </div>
-              </div>
-
-              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:flex lg:justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={resetFilter}
-                  className="w-full lg:w-auto px-4 py-2.5 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 text-gray-800"
-                >
-                  Reset
-                </button>
-
-                <button
-                  type="button"
-                  onClick={exportCSV}
-                  className="w-full lg:w-auto px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  Ekspor CSV
-                </button>
-              </div>
-
-              <p className="text-xs text-gray-500 mt-3">
-                Tips: gunakan pencarian untuk nama/email/judul. Filter tanggal untuk laporan pada hari tertentu.
-              </p>
-            </div>
-
-            {/* DATA CARD */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
-              {loading ? (
-                <div className="p-6">
-                  <div className="animate-pulse space-y-3">
-                    <div className="h-4 bg-gray-200 rounded w-1/3" />
-                    <div className="h-4 bg-gray-200 rounded w-1/2" />
-                    <div className="h-4 bg-gray-200 rounded w-2/3" />
-                  </div>
+                <div className="md:col-span-2 flex flex-col gap-2">
+                  <Button variant="secondary" className="w-full" onClick={resetFilter}>Reset</Button>
+                  <Button className="w-full" onClick={exportCSV}>Ekspor CSV</Button>
                 </div>
-              ) : (
-                <>
-                  {/* MOBILE: CARD LIST */}
-                  <div className="block md:hidden p-4 space-y-3">
-                    {paged.length === 0 ? (
-                      <div className="text-center text-gray-500 py-10">
-                        Tidak ada data laporan yang sesuai filter.
-                      </div>
-                    ) : (
-                      paged.map((row) => {
-                        const isDownloading = downloadingId === row._id;
-                        return (
-                          <div key={row._id} className="border border-gray-200 rounded-2xl p-4">
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="min-w-0">
-                                <p className="text-sm font-semibold text-gray-900 truncate" title={row.user?.name}>
-                                  {row.user?.name}
-                                </p>
-                                <p className="text-xs text-gray-600 truncate" title={row.user?.email}>
-                                  {row.user?.email}
-                                </p>
+              </div>
+            </CardBody>
+          </Card>
 
-                                <div className="mt-2">
-                                  <StatusBadge status={row.status ?? "pending"} />
-                                </div>
+          <Card>
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-16 text-teal-600">
+                <ArrowPathIcon className="w-8 h-8 animate-spin mb-3" />
+                <p className="text-sm font-semibold">Memuat data laporan...</p>
+              </div>
+            ) : paged.length === 0 ? (
+              <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/50 m-6">
+                <DocumentTextIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-sm font-semibold text-gray-500">Tidak ada laporan ditemukan</p>
+                <p className="text-xs text-gray-400 mt-1">Coba sesuaikan kata kunci atau filter pencarian Anda.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-[1200px] w-full text-sm text-left text-gray-700">
+                  <thead className="bg-gray-50/50 border-b border-gray-100 text-gray-800">
+                    <tr>
+                      <th className="px-6 py-4 font-bold w-[220px]">Peserta</th>
+                      <th className="px-6 py-4 font-bold min-w-[320px]">Informasi Laporan</th>
+                      <th className="px-6 py-4 font-bold w-[160px]">Status</th>
+                      <th className="px-6 py-4 font-bold w-[180px]">Tanggal</th>
+                      <th className="px-6 py-4 font-bold w-[220px] text-right">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 bg-white">
+                    {paged.map((row) => {
+                      const isDownloading = downloadingId === row._id;
+                      return (
+                        <tr key={row._id} className="hover:bg-gray-50/50 transition-colors">
+                          <td className="px-6 py-4 align-top">
+                            <p className="font-bold text-gray-900 truncate max-w-[200px]">{row.user?.name}</p>
+                            <p className="text-xs text-gray-500 truncate max-w-[200px] mt-0.5">{row.user?.email}</p>
+                          </td>
+                          <td className="px-6 py-4 align-top">
+                            <p className="font-bold text-gray-800 text-sm mb-1">{row.judul}</p>
+                            <p className="text-xs text-gray-600 leading-relaxed mb-2 line-clamp-2">
+                              {row.deskripsi?.trim() ? row.deskripsi : <span className="italic text-gray-400">Tidak ada deskripsi</span>}
+                            </p>
+                            {!!row.adminCatatan?.trim() && (
+                              <div className="mt-2 bg-rose-50/50 border border-rose-100 rounded-lg p-2.5">
+                                <p className="text-[10px] font-bold text-rose-700 uppercase tracking-wider mb-0.5">Catatan Admin</p>
+                                <p className="text-xs text-rose-800 line-clamp-2">{row.adminCatatan}</p>
                               </div>
-
-                              <span className="text-xs bg-gray-50 border border-gray-200 text-gray-700 px-2.5 py-1 rounded-full whitespace-nowrap">
-                                {fmtTanggal(row.createdAt)}
-                              </span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 align-top">
+                            <StatusBadge status={row.status} />
+                          </td>
+                          <td className="px-6 py-4 align-top">
+                            <span className="text-xs font-medium text-gray-600 bg-gray-50 px-2.5 py-1 rounded-md border border-gray-100">
+                              {fmtTanggal(row.createdAt)}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 align-top text-right">
+                            <div className="flex items-center justify-end gap-2 flex-wrap">
+                              <Button size="xs" variant="outline" onClick={() => openReview(row)}>Nilai</Button>
+                              <Button size="xs" onClick={() => handleDownload(row)} disabled={isDownloading} isLoading={isDownloading} leftIcon={<DocumentArrowDownIcon className="w-4 h-4"/>}>Unduh</Button>
                             </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
-                            <div className="mt-3 space-y-2">
-                              <div>
-                                <p className="text-xs text-gray-500">Judul</p>
-                                <p className="text-sm text-gray-800 break-words">{row.judul}</p>
-                              </div>
-
-                              <div>
-                                <p className="text-xs text-gray-500">Deskripsi</p>
-                                <p className="text-sm text-gray-800 break-words">
-                                  {row.deskripsi?.trim() ? row.deskripsi : <span className="text-gray-400">-</span>}
-                                </p>
-
-                                {!!row.adminCatatan?.trim() && (
-                                  <p className="mt-2 text-xs text-gray-600 break-words">
-                                    <span className="text-gray-500">Catatan admin:</span> {row.adminCatatan}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-
-                            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                              <button
-                                type="button"
-                                onClick={() => openReview(row)}
-                                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 text-gray-800"
-                              >
-                                Nilai
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => handleDownload(row)}
-                                disabled={isDownloading}
-                                className={`w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-white transition ${
-                                  isDownloading ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
-                                }`}
-                              >
-                                <IconDownload spinning={isDownloading} />
-                                <span className="text-sm font-medium">{isDownloading ? "Proses..." : "Download"}</span>
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-
-                  {/* DESKTOP/TABLET: TABLE */}
-                  <div className="hidden md:block">
-                    <div className="overflow-x-auto rounded-2xl">
-                      <table className="min-w-[1200px] w-full text-sm text-left text-gray-700">
-                        <thead className="bg-gray-50 text-gray-900">
-                          <tr>
-                            <th className="px-4 py-3 font-semibold w-[220px]">Nama</th>
-                            <th className="px-4 py-3 font-semibold w-[220px]">Email</th>
-                            <th className="px-4 py-3 font-semibold min-w-[320px]">Judul</th>
-                            <th className="px-4 py-3 font-semibold min-w-[320px]">Deskripsi</th>
-                            <th className="px-4 py-3 font-semibold w-[140px] whitespace-nowrap">Status</th>
-                            <th className="px-4 py-3 font-semibold w-[170px] whitespace-nowrap">Tanggal</th>
-                            <th className="px-6 py-3 font-semibold w-[260px] whitespace-nowrap">Aksi</th>
-                          </tr>
-                        </thead>
-
-                        <tbody className="bg-white">
-                          {paged.map((row) => {
-                            const isDownloading = downloadingId === row._id;
-
-                            return (
-                              <tr key={row._id} className="border-t hover:bg-gray-50 align-top">
-                                <td className="px-4 py-4 font-medium">
-                                  <div className="max-w-[220px] truncate" title={row.user?.name}>
-                                    {row.user?.name}
-                                  </div>
-                                </td>
-
-                                <td className="px-4 py-4">
-                                  <div className="max-w-[220px] truncate" title={row.user?.email}>
-                                    {row.user?.email}
-                                  </div>
-                                </td>
-
-                                <td className="px-4 py-4">
-                                  <div className="max-w-[420px] break-words" title={row.judul}>
-                                    {row.judul}
-                                  </div>
-                                </td>
-
-                                <td className="px-4 py-4">
-                                  <div className="max-w-[520px] break-words text-gray-700">
-                                    {row.deskripsi?.trim() ? row.deskripsi : <span className="text-gray-400">-</span>}
-                                  </div>
-
-                                  {!!row.adminCatatan?.trim() && (
-                                    <div className="mt-2 max-w-[520px] break-words text-xs text-gray-600">
-                                      <span className="text-gray-500">Catatan admin:</span> {row.adminCatatan}
-                                    </div>
-                                  )}
-                                </td>
-
-                                <td className="px-4 py-4">
-                                  <StatusBadge status={row.status ?? "pending"} />
-                                </td>
-
-                                <td className="px-4 py-4 whitespace-nowrap">{fmtTanggal(row.createdAt)}</td>
-
-                                <td className="px-6 py-4">
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <button
-                                      type="button"
-                                      onClick={() => openReview(row)}
-                                      className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 text-gray-800 whitespace-nowrap"
-                                    >
-                                      Nilai
-                                    </button>
-
-                                    <button
-                                      type="button"
-                                      onClick={() => handleDownload(row)}
-                                      disabled={isDownloading}
-                                      className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl text-white transition whitespace-nowrap ${
-                                        isDownloading
-                                          ? "bg-blue-400 cursor-not-allowed"
-                                          : "bg-blue-600 hover:bg-blue-700"
-                                      }`}
-                                    >
-                                      <IconDownload spinning={isDownloading} />
-                                      <span className="text-sm font-medium">
-                                        {isDownloading ? "Proses..." : "Download"}
-                                      </span>
-                                    </button>
-                                  </div>
-                                </td>
-                              </tr>
-                            );
-                          })}
-
-                          {paged.length === 0 && (
-                            <tr>
-                              <td colSpan={7} className="px-4 py-10 text-center text-gray-500">
-                                Tidak ada data laporan yang sesuai filter.
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-
-                  {/* Pagination — data dari server headers */}
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 py-4 border-t bg-white rounded-b-2xl">
-                    <p className="text-sm text-gray-600">
-                      Menampilkan <b>{totalCount === 0 ? 0 : (page - 1) * rowsPerPage + 1}</b>–<b>{Math.min(page * rowsPerPage, totalCount)}</b> dari{" "}
-                      <b>{totalCount}</b> laporan
-                      {debouncedSearch && (
-                        <span className="ml-1 text-blue-600">(pencarian: &quot;{debouncedSearch}&quot;)</span>
-                      )}
-                    </p>
-
-                    <div className="flex items-center justify-end gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setPage((p) => Math.max(1, p - 1))}
-                        disabled={page <= 1}
-                        className={`px-4 py-2 rounded-xl border ${
-                          page <= 1
-                            ? "text-gray-400 border-gray-200 cursor-not-allowed"
-                            : "text-gray-800 border-gray-300 hover:bg-gray-50"
-                        }`}
-                      >
-                        Prev
-                      </button>
-
-                      <span className="text-sm text-gray-700">
-                        {page} / {totalPages}
-                      </span>
-
-                      <button
-                        type="button"
-                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                        disabled={page >= totalPages}
-                        className={`px-4 py-2 rounded-xl border ${
-                          page >= totalPages
-                            ? "text-gray-400 border-gray-200 cursor-not-allowed"
-                            : "text-gray-800 border-gray-300 hover:bg-gray-50"
-                        }`}
-                      >
-                        Next
-                      </button>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-
-            <div className="h-2" />
-          </div>
+            {/* Pagination Controls */}
+            {!loading && paged.length > 0 && (
+              <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row items-center justify-between gap-4 rounded-b-2xl">
+                <p className="text-sm font-medium text-gray-600">
+                  Menampilkan <span className="text-gray-900">{totalCount === 0 ? 0 : (page - 1) * rowsPerPage + 1}</span> hingga <span className="text-gray-900">{Math.min(page * rowsPerPage, totalCount)}</span> dari <span className="text-gray-900">{totalCount}</span> laporan
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button variant="secondary" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}>Sebelumnya</Button>
+                  <span className="text-sm font-semibold text-gray-700 px-2">{page} / {totalPages}</span>
+                  <Button variant="secondary" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>Selanjutnya</Button>
+                </div>
+              </div>
+            )}
+          </Card>
         </main>
-
         <Footer />
       </div>
     </div>

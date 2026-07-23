@@ -5,6 +5,9 @@ import { useAuth } from "@/hooks/useAuth";
 import Sidebar from "@/components/layout/Sidebar";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import { Card, CardBody } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
+import { UsersIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
 
 // 🔧 Selalu gunakan proxy Vercel
 const API_BASE = "/api";
@@ -120,240 +123,190 @@ export default function ManajemenPesertaPage() {
   }, [peserta, debouncedSearch, sortBy, sortOrder]);
 
   return (
-    <div className="flex min-h-screen w-full bg-gray-100 overflow-x-hidden">
+    <div className="flex min-h-screen w-full bg-gray-50/50 overflow-x-hidden">
       {/* Sidebar */}
       <Sidebar />
 
       {/* Konten utama */}
-      <div className="flex-1 md:ml-64 flex flex-col w-full">
+      <div className="flex-1 md:ml-64 flex flex-col min-w-0">
         <Navbar />
 
-        <main className="flex-1 mt-14 px-3 sm:px-4 lg:px-8 py-6 w-full">
-          <div className="mx-auto w-full max-w-7xl space-y-6">
-            {/* Welcome Box */}
-            <div className="bg-white p-4 sm:p-6 md:p-8 rounded-xl shadow">
-              <h1 className="text-lg sm:text-xl font-semibold text-gray-900">
-                Manajemen Peserta
-              </h1>
-              <p className="text-gray-600 mt-1 text-sm sm:text-base">
-                Monitoring kehadiran & tugas peserta
-              </p>
+        <main className="flex-1 mt-14 px-4 sm:px-6 lg:px-8 py-6 w-full max-w-7xl mx-auto">
+          <div className="space-y-6">
+            
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-teal-100 rounded-xl">
+                  <UsersIcon className="w-6 h-6 text-teal-700" />
+                </div>
+                <div>
+                  <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+                    Manajemen Peserta
+                  </h1>
+                  <p className="text-gray-500 text-sm">
+                    Monitoring kehadiran dan aktivitas tugas peserta magang
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2 self-start sm:self-auto">
+                <span className="text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-100 px-3 py-1.5 rounded-lg flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
+                  Total: {filteredPeserta.length} Peserta
+                </span>
+              </div>
             </div>
 
-            {/* Error / Loading */}
+            {/* Error Message */}
             {error && (
               <div
                 role="alert"
-                className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg"
+                className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl shadow-sm text-sm font-medium flex items-center gap-2"
               >
-                {error}
+                <span>⚠️</span> {error}
               </div>
             )}
 
-            {loading && (
-              <div className="bg-white p-6 rounded-xl shadow text-gray-600">
-                <div className="animate-pulse space-y-3">
-                  <div className="h-4 bg-gray-200 rounded w-1/3" />
-                  <div className="h-4 bg-gray-200 rounded w-1/2" />
-                  <div className="h-4 bg-gray-200 rounded w-2/3" />
-                </div>
-              </div>
-            )}
+            {/* Main Content Area */}
+            <Card>
+              <CardBody className="p-5">
+                {/* Filters */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end mb-6">
+                  <div className="md:col-span-6">
+                    <Input
+                      label="Pencarian"
+                      placeholder="Cari nama atau email..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                    />
+                  </div>
 
-            {/* Filter & Sort */}
-            {!loading && !error && (
-              <div className="bg-white p-4 sm:p-6 rounded-xl shadow">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 items-start md:items-center">
-                  {/* Input cari */}
-                  <input
-                    type="text"
-                    placeholder="Cari nama atau email…"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="
-                      w-full p-2.5 rounded-lg shadow-sm
-                      bg-white text-gray-800 placeholder:text-gray-500
-                      border border-gray-300
-                      focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                      hover:border-gray-400
-                      dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700 dark:placeholder:text-gray-500
-                    "
-                    aria-label="Cari peserta"
-                  />
-
-                  {/* Selects */}
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="md:col-span-3">
+                    <label className="text-sm font-semibold text-gray-700 block mb-1.5">Urutkan Berdasarkan</label>
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value as SortBy)}
-                      className="
-                        p-2.5 rounded-lg shadow-sm font-medium
-                        bg-white text-gray-800
-                        border border-gray-300
-                        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                        hover:border-gray-400
-                        dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700
-                      "
-                      aria-label="Urutkan berdasarkan"
+                      className="w-full text-sm p-2.5 rounded-xl bg-white border border-gray-200 text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-colors"
                     >
                       <option value="name">Nama</option>
                       <option value="hadir">Jumlah Hadir</option>
                       <option value="tugas">Jumlah Tugas</option>
                     </select>
+                  </div>
 
+                  <div className="md:col-span-3">
+                    <label className="text-sm font-semibold text-gray-700 block mb-1.5">Arah Urutan</label>
                     <select
                       value={sortOrder}
-                      onChange={(e) =>
-                        setSortOrder(e.target.value as SortOrder)
-                      }
-                      className="
-                        p-2.5 rounded-lg shadow-sm font-medium
-                        bg-white text-gray-800
-                        border border-gray-300
-                        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                        hover:border-gray-400
-                        dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700
-                      "
-                      aria-label="Arah pengurutan"
+                      onChange={(e) => setSortOrder(e.target.value as SortOrder)}
+                      className="w-full text-sm p-2.5 rounded-xl bg-white border border-gray-200 text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-colors"
                     >
-                      <option value="asc">Naik (Asc)</option>
-                      <option value="desc">Turun (Desc)</option>
+                      <option value="asc">Menaik (A-Z / Terkecil)</option>
+                      <option value="desc">Menurun (Z-A / Terbesar)</option>
                     </select>
                   </div>
+                </div>
 
-                  {/* Ringkasan jumlah (sembunyikan di layar kecil) */}
-                  <div className="hidden md:flex justify-end">
-                    <span className="text-sm text-gray-500">
-                      Total: <b>{filteredPeserta.length}</b> peserta
-                    </span>
+                {/* Loading State */}
+                {loading && (
+                  <div className="flex flex-col items-center justify-center py-16 text-teal-600">
+                    <ArrowPathIcon className="w-8 h-8 animate-spin mb-3" />
+                    <p className="text-sm font-semibold">Memuat data peserta...</p>
                   </div>
-                </div>
+                )}
 
-                {/* Mobile list (kartu) */}
-                <div className="mt-4 grid sm:hidden gap-3">
-                  {filteredPeserta.length === 0 && (
-                    <p className="text-center text-gray-500 py-4">
-                      Tidak ada peserta ditemukan.
-                    </p>
-                  )}
-
-                  {filteredPeserta.map((p) => (
-                    <div
-                      key={p._id}
-                      className="rounded-lg border bg-white p-4 shadow-sm w-full"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p
-                            className="font-semibold text-gray-900 truncate"
-                            title={p.name}
-                          >
-                            {p.name}
-                          </p>
-                          <p
-                            className="text-sm text-gray-600 truncate"
-                            title={p.email}
-                          >
-                            {p.email}
-                          </p>
+                {/* Data Table / List */}
+                {!loading && !error && (
+                  <>
+                    {/* Mobile list (kartu) */}
+                    <div className="block md:hidden space-y-4">
+                      {filteredPeserta.length === 0 ? (
+                        <div className="text-center text-gray-500 py-10 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+                          Tidak ada peserta ditemukan.
                         </div>
-                        <div className="flex gap-2 flex-wrap justify-end shrink-0">
-                          <span className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-md">
-                            Hadir: {p.hadir}
-                          </span>
-                          <span className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-md">
-                            Tugas: {p.tugas}
-                          </span>
-                          <span className="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-md">
-                            Aktif: {hitungKeaktifan(p.hadir, p.tugas)}%
-                          </span>
-                        </div>
-                      </div>
+                      ) : (
+                        filteredPeserta.map((p) => (
+                          <div key={p._id} className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+                            <p className="font-bold text-gray-900 truncate">{p.name}</p>
+                            <p className="text-xs text-gray-500 truncate mb-3">{p.email}</p>
+                            
+                            <div className="flex flex-wrap gap-2">
+                              <span className="px-2.5 py-1 text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100 rounded-lg">
+                                Hadir: {p.hadir}
+                              </span>
+                              <span className="px-2.5 py-1 text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-100 rounded-lg">
+                                Tugas: {p.tugas}
+                              </span>
+                              <span className="px-2.5 py-1 text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-100 rounded-lg">
+                                Aktif: {hitungKeaktifan(p.hadir, p.tugas)}%
+                              </span>
+                            </div>
+                          </div>
+                        ))
+                      )}
                     </div>
-                  ))}
-                </div>
 
-                {/* Table (md ke atas) */}
-                <div className="mt-4 overflow-x-auto hidden md:block">
-                  <table className="min-w-full text-sm text-left text-gray-700">
-                    <thead className="bg-gray-50 text-gray-900">
-                      <tr>
-                        <th scope="col" className="px-4 py-3 font-medium">
-                          Nama
-                        </th>
-                        <th scope="col" className="px-4 py-3 font-medium">
-                          Email
-                        </th>
-                        <th
-                          scope="col"
-                          className="px-4 py-3 text-center font-medium"
-                        >
-                          Jumlah Hadir
-                        </th>
-                        <th
-                          scope="col"
-                          className="px-4 py-3 text-center font-medium"
-                        >
-                          Jumlah Tugas
-                        </th>
-                        <th
-                          scope="col"
-                          className="px-4 py-3 text-center font-medium"
-                        >
-                          Keaktifan
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white">
-                      {filteredPeserta.map((p) => (
-                        <tr key={p._id} className="border-t hover:bg-gray-50">
-                          <td className="px-4 py-3 font-medium">
-                            <span
-                              className="block max-w-[280px] lg:max-w-none truncate"
-                              title={p.name}
-                            >
-                              {p.name}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3">
-                            <span
-                              className="block max-w-[360px] xl:max-w-none truncate"
-                              title={p.email}
-                            >
-                              {p.email}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            <span className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-md">
-                              {p.hadir}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            <span className="inline-block px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded-md">
-                              {p.tugas}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            <span className="inline-block px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-md">
-                              {hitungKeaktifan(p.hadir, p.tugas)}%
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                    {/* Table (md ke atas) */}
+                    <div className="hidden md:block overflow-x-auto">
+                      <table className="min-w-full text-sm text-left text-gray-700 border-t border-gray-100">
+                        <thead className="bg-gray-50/80 text-gray-800">
+                          <tr>
+                            <th scope="col" className="px-6 py-4 font-bold">Nama</th>
+                            <th scope="col" className="px-6 py-4 font-bold">Email</th>
+                            <th scope="col" className="px-6 py-4 text-center font-bold">Kehadiran</th>
+                            <th scope="col" className="px-6 py-4 text-center font-bold">Tugas</th>
+                            <th scope="col" className="px-6 py-4 text-center font-bold">Keaktifan</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-100">
+                          {filteredPeserta.length === 0 ? (
+                            <tr>
+                              <td colSpan={5} className="px-6 py-12 text-center text-gray-500 bg-gray-50/30">
+                                Tidak ada peserta ditemukan.
+                              </td>
+                            </tr>
+                          ) : (
+                            filteredPeserta.map((p) => (
+                              <tr key={p._id} className="hover:bg-gray-50/50 transition-colors">
+                                <td className="px-6 py-4">
+                                  <span className="block font-semibold text-gray-900 truncate max-w-[240px]">
+                                    {p.name}
+                                  </span>
+                                </td>
+                                <td className="px-6 py-4">
+                                  <span className="block text-gray-500 truncate max-w-[240px]">
+                                    {p.email}
+                                  </span>
+                                </td>
+                                <td className="px-6 py-4 text-center">
+                                  <span className="inline-flex items-center justify-center min-w-[3rem] px-2 py-1 text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100 rounded-lg">
+                                    {p.hadir}
+                                  </span>
+                                </td>
+                                <td className="px-6 py-4 text-center">
+                                  <span className="inline-flex items-center justify-center min-w-[3rem] px-2 py-1 text-xs font-bold bg-amber-50 text-amber-700 border border-amber-100 rounded-lg">
+                                    {p.tugas}
+                                  </span>
+                                </td>
+                                <td className="px-6 py-4 text-center">
+                                  <span className="inline-flex items-center justify-center min-w-[3.5rem] px-2 py-1 text-xs font-bold bg-teal-50 text-teal-700 border border-teal-100 rounded-lg">
+                                    {hitungKeaktifan(p.hadir, p.tugas)}%
+                                  </span>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
+              </CardBody>
+            </Card>
 
-                  {filteredPeserta.length === 0 && (
-                    <p className="text-center text-gray-500 mt-4">
-                      Tidak ada peserta ditemukan.
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
         </main>
-
         <Footer />
       </div>
     </div>
