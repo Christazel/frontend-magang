@@ -7,20 +7,12 @@ import Footer from "@/components/layout/Footer";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { Pagination } from "@/components/ui/Pagination";
 import { ClockIcon, ArrowPathIcon, MapPinIcon } from "@heroicons/react/24/outline";
+import { presensiService, getErrorMessage, parsePaginationHeaders } from "@/lib/api";
+import type { Presensi } from "@/types";
 
-const API_BASE = "/api";
 const ROWS_PER_PAGE = 10;
-
-interface Presensi {
-  _id: string;
-  tanggal: string;
-  jamMasuk?: string;
-  jamKeluar?: string;
-  lokasiMasuk?: string;
-  lokasiKeluar?: string;
-  user?: { name: string; email: string };
-}
 
 type Grouped = {
   user?: { name: string; email: string };
@@ -70,42 +62,18 @@ export default function RekapPresensiPage() {
     setLoading(true);
     setError("");
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        window.location.href = "/login";
-        return;
-      }
-
-      // ✅ Search & pagination dikirim ke server — bukan di-filter di browser
-      const params = new URLSearchParams({
-        page: String(page),
-        limit: String(ROWS_PER_PAGE),
-      });
-      if (debouncedSearch) params.set("search", debouncedSearch);
-
-      const res = await fetch(`${API_BASE}/presensi/admin?${params.toString()}`, {
-        headers: { Authorization: `Bearer ${token}` },
-        cache: "no-store",
+      const response = await presensiService.getAdminAll({
+        page,
+        limit: ROWS_PER_PAGE,
+        search: debouncedSearch || undefined,
       });
 
-      const txt = await res.text();
-      let result: any = null;
-      try {
-        result = JSON.parse(txt);
-      } catch {
-        if (!res.ok) throw new Error(txt || "Gagal mengambil data presensi");
-      }
-
-      if (!res.ok) {
-        throw new Error(result?.msg || "Gagal mengambil data presensi");
-      }
-
-      // ✅ Baca metadata paginasi dari HTTP Headers
-      setTotalCount(Number(res.headers.get("X-Total-Count") ?? 0));
-      setTotalPages(Number(res.headers.get("X-Total-Pages") ?? 1));
-      setData(Array.isArray(result) ? result : []);
+      const meta = parsePaginationHeaders(response.headers);
+      setTotalCount(meta.totalCount || 0);
+      setTotalPages(meta.totalPages || 1);
+      setData(Array.isArray(response.data) ? response.data : []);
     } catch (e: any) {
-      setError(e?.message || "Terjadi kesalahan saat mengambil data presensi.");
+      setError(getErrorMessage(e));
     } finally {
       setLoading(false);
     }
@@ -286,15 +254,15 @@ export default function RekapPresensiPage() {
 
             {/* Pagination Controls */}
             {!loading && totalPages > 1 && (
-              <div className="px-6 py-4 border border-gray-100 bg-white flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl shadow-sm">
-                <p className="text-sm font-medium text-gray-600">
-                  Menampilkan <span className="text-gray-900">{totalCount === 0 ? 0 : (page - 1) * ROWS_PER_PAGE + 1}</span> hingga <span className="text-gray-900">{Math.min(page * ROWS_PER_PAGE, totalCount)}</span> dari <span className="text-gray-900">{totalCount}</span> presensi
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button variant="secondary" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}>Sebelumnya</Button>
-                  <span className="text-sm font-semibold text-gray-700 px-2">{page} / {totalPages}</span>
-                  <Button variant="secondary" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>Selanjutnya</Button>
-                </div>
+              <div className="mt-4">
+                <Pagination
+                  page={page}
+                  totalPages={totalPages}
+                  totalCount={totalCount}
+                  rowsPerPage={ROWS_PER_PAGE}
+                  onPageChange={setPage}
+                  itemName="presensi"
+                />
               </div>
             )}
             

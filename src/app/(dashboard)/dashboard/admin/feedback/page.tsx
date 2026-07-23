@@ -8,15 +8,8 @@ import { Card, CardBody } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { ChatBubbleLeftEllipsisIcon, PaperAirplaneIcon } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
-
-type User = {
-  _id: string;
-  name: string;
-  email: string;
-};
-
-// 🔧 konsisten pakai proxy
-const API_BASE = "/api";
+import { userService, feedbackService, getErrorMessage } from "@/lib/api";
+import type { User } from "@/types";
 
 export default function FeedbackAdminPage() {
   const [pesertaList, setPesertaList] = useState<User[]>([]);
@@ -25,24 +18,12 @@ export default function FeedbackAdminPage() {
   const [loading, setLoading] = useState(false);
 
   const fetchPeserta = async () => {
-    const token = localStorage.getItem("token");
     try {
-      const res = await fetch(`${API_BASE}/users/peserta`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (res.status === 401) {
-        localStorage.removeItem("token");
-        window.location.href = "/login";
-        return;
-      }
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.msg || "Gagal mengambil peserta");
-      setPesertaList(data);
+      const { data } = await userService.getPesertaList();
+      setPesertaList(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Gagal mengambil peserta:", err);
-      toast.error("Gagal mengambil daftar peserta");
+      toast.error(getErrorMessage(err));
     }
   };
 
@@ -60,32 +41,13 @@ export default function FeedbackAdminPage() {
     }
 
     setLoading(true);
-    const token = localStorage.getItem("token");
-    
     try {
-      const res = await fetch(`${API_BASE}/feedback`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ userId: selectedUser, feedback }),
-      });
-
-      if (res.status === 401) {
-        localStorage.removeItem("token");
-        window.location.href = "/login";
-        return;
-      }
-
-      const result = await res.json();
-      if (!res.ok) throw new Error(result?.msg || "Gagal mengirim feedback");
-
+      await feedbackService.send({ userId: selectedUser, feedback });
       toast.success("Feedback berhasil dikirim ke peserta!");
       setSelectedUser("");
       setFeedback("");
     } catch (error: any) {
-      toast.error(error.message || "Gagal mengirim feedback");
+      toast.error(getErrorMessage(error));
     } finally {
       setLoading(false);
     }
