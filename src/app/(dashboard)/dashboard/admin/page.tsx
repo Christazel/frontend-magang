@@ -48,8 +48,8 @@ function hitungKeaktifan(hadir: number, tugas: number): number {
 
 export default function AdminDashboard() {
   const { user } = useAuth();
-  const { data: pesertaData, error: errorPeserta, isLoading: loadingPeserta } = useSWR<Peserta[]>("/api/users/admin/peserta", fetcher);
-  const { data: laporanData, error: errorLaporan, isLoading: loadingLaporan } = useSWR<any[]>("/api/laporan/admin", fetcher);
+  const { data: pesertaData, error: errorPeserta, isLoading: loadingPeserta } = useSWR<Peserta[]>("/users/admin/peserta", fetcher);
+  const { data: laporanData, error: errorLaporan, isLoading: loadingLaporan } = useSWR<any[]>("/laporan/admin", fetcher);
 
   const loading = loadingPeserta || loadingLaporan;
   const error = errorPeserta || errorLaporan ? "Terjadi kesalahan saat mengambil statistik dashboard." : "";
