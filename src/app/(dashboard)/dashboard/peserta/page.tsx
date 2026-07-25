@@ -76,10 +76,10 @@ export default function PesertaDashboard() {
     datasets: [
       {
         data: [stats.hadir, TOTAL_HARI - stats.hadir],
-        backgroundColor: ["rgba(13, 148, 136, 0.85)", "rgba(229, 231, 235, 0.8)"],
-        borderColor: ["rgba(13, 148, 136, 1)", "rgba(209, 213, 219, 1)"],
+        backgroundColor: ["rgba(11, 44, 101, 0.85)", "rgba(229, 231, 235, 0.8)"],
+        borderColor: ["rgba(11, 44, 101, 1)", "rgba(209, 213, 219, 1)"],
         borderWidth: 2,
-        hoverBackgroundColor: ["rgba(15, 118, 110, 0.95)", "rgba(209, 213, 219, 0.9)"],
+        hoverBackgroundColor: ["rgba(6, 28, 71, 0.95)", "rgba(209, 213, 219, 0.9)"],
       },
     ],
   };
@@ -90,11 +90,11 @@ export default function PesertaDashboard() {
       {
         label: "Jumlah Hari",
         data: [stats.hadir, TOTAL_HARI - stats.hadir],
-        backgroundColor: ["rgba(13, 148, 136, 0.85)", "rgba(229, 231, 235, 0.8)"],
-        borderColor: ["rgba(13, 148, 136, 1)", "rgba(209, 213, 219, 1)"],
+        backgroundColor: ["rgba(11, 44, 101, 0.85)", "rgba(229, 231, 235, 0.8)"],
+        borderColor: ["rgba(11, 44, 101, 1)", "rgba(209, 213, 219, 1)"],
         borderWidth: 2,
         borderRadius: 8,
-        hoverBackgroundColor: ["rgba(15, 118, 110, 0.95)", "rgba(209, 213, 219, 0.9)"],
+        hoverBackgroundColor: ["rgba(6, 28, 71, 0.95)", "rgba(209, 213, 219, 0.9)"],
       },
     ],
   };
