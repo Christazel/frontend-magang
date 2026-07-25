@@ -108,8 +108,8 @@ export default function ManajemenPesertaPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-teal-100 rounded-xl">
-                  <UsersIcon className="w-6 h-6 text-teal-700" />
+                <div className="p-2.5 bg-blue-100 rounded-xl">
+                  <UsersIcon className="w-6 h-6 text-blue-700" />
                 </div>
                 <div>
                   <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
@@ -122,8 +122,8 @@ export default function ManajemenPesertaPage() {
               </div>
               
               <div className="flex items-center gap-2 self-start sm:self-auto">
-                <span className="text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-100 px-3 py-1.5 rounded-lg flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
+                <span className="text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100 px-3 py-1.5 rounded-lg flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
                   Total: {filteredPeserta.length} Peserta
                 </span>
               </div>
@@ -158,7 +158,7 @@ export default function ManajemenPesertaPage() {
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value as SortBy)}
-                      className="w-full text-sm p-2.5 rounded-xl bg-white border border-gray-200 text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-colors"
+                      className="w-full text-sm p-2.5 rounded-xl bg-white border border-gray-200 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
                     >
                       <option value="name">Nama</option>
                       <option value="hadir">Jumlah Hadir</option>
@@ -171,7 +171,7 @@ export default function ManajemenPesertaPage() {
                     <select
                       value={sortOrder}
                       onChange={(e) => setSortOrder(e.target.value as SortOrder)}
-                      className="w-full text-sm p-2.5 rounded-xl bg-white border border-gray-200 text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-colors"
+                      className="w-full text-sm p-2.5 rounded-xl bg-white border border-gray-200 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
                     >
                       <option value="asc">Menaik (A-Z / Terkecil)</option>
                       <option value="desc">Menurun (Z-A / Terbesar)</option>
@@ -181,7 +181,7 @@ export default function ManajemenPesertaPage() {
 
                 {/* Loading State */}
                 {loading && (
-                  <div className="flex flex-col items-center justify-center py-16 text-teal-600">
+                  <div className="flex flex-col items-center justify-center py-16 text-blue-600">
                     <ArrowPathIcon className="w-8 h-8 animate-spin mb-3" />
                     <p className="text-sm font-semibold">Memuat data peserta...</p>
                   </div>
@@ -209,7 +209,7 @@ export default function ManajemenPesertaPage() {
                               <span className="px-2.5 py-1 text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-100 rounded-lg">
                                 Tugas: {p.tugas}
                               </span>
-                              <span className="px-2.5 py-1 text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-100 rounded-lg">
+                              <span className="px-2.5 py-1 text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100 rounded-lg">
                                 Aktif: {hitungKeaktifan(p.hadir, p.tugas)}%
                               </span>
                             </div>
@@ -261,7 +261,7 @@ export default function ManajemenPesertaPage() {
                                   </span>
                                 </td>
                                 <td className="px-6 py-4 text-center">
-                                  <span className="inline-flex items-center justify-center min-w-[3.5rem] px-2 py-1 text-xs font-bold bg-teal-50 text-teal-700 border border-teal-100 rounded-lg">
+                                  <span className="inline-flex items-center justify-center min-w-[3.5rem] px-2 py-1 text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100 rounded-lg">
                                     {hitungKeaktifan(p.hadir, p.tugas)}%
                                   </span>
                                 </td>

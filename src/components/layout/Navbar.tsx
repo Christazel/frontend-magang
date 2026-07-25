@@ -27,18 +27,10 @@ export default function Navbar() {
             {/* Brand dot accent */}
             <span
               className="hidden md:inline-flex w-2 h-2 rounded-full animate-pulse"
-              style={{ background: "linear-gradient(135deg, #0d9488, #0b2c65)" }}
+              style={{ background: "linear-gradient(135deg, #0b2c65, #0b2c65)" }}
             />
             <span className="hidden md:block text-sm font-semibold text-gray-700 tracking-tight">
-              {user ? (
-                <>
-                  Halo,{" "}
-                  <span className="text-teal-700 font-bold">{user.name?.split(" ")[0]}</span>{" "}
-                  <span className="text-gray-400 font-normal">👋</span>
-                </>
-              ) : (
-                <span className="text-gray-500">SIPMA Melawi</span>
-              )}
+              Dashboard SIPMA Melawi
             </span>
             {/* Mobile: just show brand */}
             <span className="md:hidden text-sm font-bold text-gray-800 tracking-tight">
@@ -51,7 +43,7 @@ export default function Navbar() {
         <div className="flex items-center gap-3">
           {/* Bell notification icon */}
           <button
-            className="relative w-9 h-9 rounded-xl flex items-center justify-center text-gray-500 hover:text-teal-600 hover:bg-teal-50 transition-all duration-200"
+            className="relative w-9 h-9 rounded-xl flex items-center justify-center text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
             aria-label="Notifikasi"
           >
             <BellIcon className="w-5 h-5" />
@@ -65,7 +57,7 @@ export default function Navbar() {
               <div
                 className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
                 style={{
-                  background: "linear-gradient(135deg, #0d9488, #0f766e)",
+                  background: "linear-gradient(135deg, #0b2c65, #1e3a8a)",
                 }}
               >
                 {user.name?.charAt(0).toUpperCase()}

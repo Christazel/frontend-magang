@@ -56,7 +56,7 @@ export default function RegisterPage() {
   const inputClass = (name: string) =>
     `w-full py-3.5 bg-white border-2 rounded-xl text-gray-800 placeholder-gray-400 text-sm transition-all duration-200 outline-none shadow-sm ${
       focused === name
-        ? "border-teal-500 shadow-teal-100 shadow-lg"
+        ? "border-blue-500 shadow-blue-100 shadow-lg"
         : "border-gray-200 hover:border-gray-300"
     }`;
 
@@ -450,7 +450,7 @@ export default function RegisterPage() {
               <button
                 type="button"
                 onClick={() => router.push("/login")}
-                className="text-teal-600 font-semibold hover:text-teal-700 transition-colors hover:underline"
+                className="text-blue-600 font-semibold hover:text-blue-700 transition-colors hover:underline"
                 disabled={loading}
               >
                 Masuk Sekarang

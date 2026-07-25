@@ -67,8 +67,8 @@ export default function FeedbackAdminPage() {
           
           <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-teal-100 rounded-xl">
-                <ChatBubbleLeftEllipsisIcon className="w-6 h-6 text-teal-700" />
+              <div className="p-2.5 bg-blue-100 rounded-xl">
+                <ChatBubbleLeftEllipsisIcon className="w-6 h-6 text-blue-700" />
               </div>
               <div>
                 <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
@@ -92,7 +92,7 @@ export default function FeedbackAdminPage() {
                   <select
                     value={selectedUser}
                     onChange={(e) => setSelectedUser(e.target.value)}
-                    className="w-full p-3 bg-gray-50/50 border border-gray-200 rounded-xl text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all font-medium appearance-none"
+                    className="w-full p-3 bg-gray-50/50 border border-gray-200 rounded-xl text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium appearance-none"
                     required
                   >
                     <option value="" disabled>— Pilih Peserta Magang —</option>
@@ -111,7 +111,7 @@ export default function FeedbackAdminPage() {
                   <textarea
                     value={feedback}
                     onChange={(e) => setFeedback(e.target.value)}
-                    className="w-full p-4 bg-gray-50/50 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all resize-none font-medium leading-relaxed"
+                    className="w-full p-4 bg-gray-50/50 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none font-medium leading-relaxed"
                     rows={6}
                     placeholder="Tuliskan feedback yang membangun untuk peserta..."
                     required
