@@ -8,7 +8,7 @@ import { Users, FileText, TrendingUp, Activity } from "lucide-react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/api";
 import { Card, CardHeader, CardBody, StatCard } from "@/components/ui/Card";
-import type { Peserta } from "@/types";
+import type { Peserta, Laporan } from "@/types";
 
 // Chart.js
 import {
@@ -49,7 +49,7 @@ function hitungKeaktifan(hadir: number, tugas: number): number {
 export default function AdminDashboard() {
   const { user } = useAuth();
   const { data: pesertaData, error: errorPeserta, isLoading: loadingPeserta } = useSWR<Peserta[]>("/users/admin/peserta", fetcher);
-  const { data: laporanData, error: errorLaporan, isLoading: loadingLaporan } = useSWR<any[]>("/laporan/admin", fetcher);
+  const { data: laporanData, error: errorLaporan, isLoading: loadingLaporan } = useSWR<Laporan[]>("/laporan/admin", fetcher);
 
   const loading = loadingPeserta || loadingLaporan;
   const error = errorPeserta || errorLaporan ? "Terjadi kesalahan saat mengambil statistik dashboard." : "";

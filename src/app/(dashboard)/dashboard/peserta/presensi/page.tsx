@@ -94,7 +94,6 @@ export default function PresensiPage() {
 
   useEffect(() => {
     fetchPresensiHariIni();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const canMasuk = useMemo(() => {
@@ -167,7 +166,7 @@ export default function PresensiPage() {
 
       setSuccess(`Presensi ${tipe} berhasil dicatat!`);
       fetchPresensiHariIni();
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(getErrorMessage(err));
     } finally {
       setLoading(false);

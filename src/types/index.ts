@@ -44,7 +44,7 @@ export interface MenuItem {
 
 // ---- API ----
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   message: string;
   data?: T;
@@ -89,7 +89,7 @@ export interface Laporan {
   judul: string;
   deskripsi: string;
   createdAt: string;
-  fileId: any;
+  fileId: string | Record<string, unknown> | null;
   originalName?: string;
   mimeType?: string;
   gfsFilename?: string;
@@ -98,7 +98,7 @@ export interface Laporan {
   status?: ReviewStatus;
   adminCatatan?: string;
   reviewed?: boolean;
-  reviewedBy?: any;
+  reviewedBy?: string | Record<string, unknown> | null;
   reviewedAt?: string | null;
   // Populated user (untuk tampilan admin)
   user?: Pick<User, "name" | "email">;

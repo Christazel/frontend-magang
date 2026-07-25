@@ -46,7 +46,7 @@ export default function RegisterPage() {
       if (!res.ok) throw new Error("Registrasi gagal");
       toast.success("Akun berhasil dibuat! Silakan masuk 🎉");
       router.push("/login");
-    } catch (err) {
+    } catch {
       toast.error("Registrasi gagal. Coba lagi.");
     } finally {
       setLoading(false);
