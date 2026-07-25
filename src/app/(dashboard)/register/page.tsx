@@ -10,6 +10,9 @@ import {
   EyeIcon,
   EyeSlashIcon,
   ShieldCheckIcon,
+  UserPlusIcon,
+  ClipboardDocumentCheckIcon,
+  RocketLaunchIcon,
 } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
 
@@ -63,18 +66,17 @@ export default function RegisterPage() {
       <div
         className="hidden lg:flex lg:w-1/2 relative overflow-hidden flex-col justify-between p-12"
         style={{
-          background:
-            "linear-gradient(135deg, #0f4c35 0%, #0d9488 50%, #0f766e 100%)",
+          background: "linear-gradient(135deg, #061c47 0%, #0b2c65 50%, #1e3a8a 100%)",
         }}
       >
         {/* Decorative blobs */}
         <div
-          className="absolute -top-20 -right-20 w-80 h-80 rounded-full opacity-20 animate-float"
-          style={{ background: "radial-gradient(circle, #5eead4, transparent)" }}
+          className="absolute -top-20 -left-20 w-80 h-80 rounded-full opacity-20 animate-float"
+          style={{ background: "radial-gradient(circle, #60a5fa, transparent)" }}
         />
         <div
-          className="absolute bottom-10 -left-16 w-96 h-96 rounded-full opacity-15 animate-float-slow"
-          style={{ background: "radial-gradient(circle, #99f6e4, transparent)" }}
+          className="absolute bottom-10 -right-16 w-96 h-96 rounded-full opacity-15 animate-float-slow"
+          style={{ background: "#93c5fd" }}
         />
         <div
           className="absolute top-1/3 right-1/4 w-40 h-40 rounded-full opacity-10"
@@ -114,7 +116,7 @@ export default function RegisterPage() {
               <h1 className="text-white text-xl font-bold leading-tight">
                 Dinas Pendidikan
               </h1>
-              <h2 className="text-teal-200 text-base font-medium">
+              <h2 className="text-blue-200 text-base font-medium">
                 Kabupaten Melawi
               </h2>
             </div>
@@ -123,22 +125,19 @@ export default function RegisterPage() {
 
         {/* Hero text */}
         <div className="relative z-10 space-y-6">
-          <div
-            className="animate-fade-in-up"
-            style={{ animationDelay: "0.2s", opacity: 0 }}
-          >
-            <p className="text-teal-200 text-sm font-semibold tracking-widest uppercase mb-3">
-              Bergabung Sekarang
+          <div className="animate-fade-in-up" style={{ animationDelay: "0.2s", opacity: 0 }}>
+            <p className="text-blue-200 text-sm font-semibold tracking-widest uppercase mb-3">
+              Bergabung Bersama Kami
             </p>
             <h2 className="text-white text-4xl font-bold leading-tight">
-              Daftarkan Dirimu
+              Daftar ke
               <span
                 className="block text-transparent bg-clip-text"
                 style={{
-                  backgroundImage: "linear-gradient(90deg, #5eead4, #99f6e4)",
+                  backgroundImage: "linear-gradient(90deg, #93c5fd, #bfdbfe)",
                 }}
               >
-                Mulai Magang!
+                SIPMA Melawi
               </span>
             </h2>
             <p className="text-white/70 text-base mt-4 leading-relaxed max-w-sm">
@@ -151,30 +150,28 @@ export default function RegisterPage() {
           <div className="space-y-4">
             {[
               {
-                step: "01",
+                icon: UserPlusIcon,
                 title: "Isi Data Diri",
                 desc: "Lengkapi nama, email, dan password kamu",
               },
               {
-                step: "02",
+                icon: ClipboardDocumentCheckIcon,
                 title: "Pilih Peran",
                 desc: "Pilih sebagai Peserta Magang atau Admin",
               },
               {
-                step: "03",
+                icon: RocketLaunchIcon,
                 title: "Mulai Akses",
                 desc: "Langsung login dan gunakan semua fitur",
               },
             ].map((item, i) => (
               <div
-                key={item.step}
+                key={item.title}
                 className="flex items-start gap-4 animate-fade-in-up"
                 style={{ animationDelay: `${0.4 + i * 0.15}s`, opacity: 0 }}
               >
                 <div className="flex-shrink-0 w-10 h-10 rounded-xl glass flex items-center justify-center">
-                  <span className="text-teal-300 font-bold text-xs">
-                    {item.step}
-                  </span>
+                  <item.icon className="w-5 h-5 text-blue-300" />
                 </div>
                 <div>
                   <p className="text-white font-semibold text-sm">
@@ -207,7 +204,7 @@ export default function RegisterPage() {
           className="absolute inset-0 opacity-40"
           style={{
             backgroundImage:
-              "radial-gradient(circle at 70% 20%, rgba(20,184,166,0.07) 0%, transparent 50%), radial-gradient(circle at 20% 80%, rgba(13,148,136,0.05) 0%, transparent 50%)",
+              "radial-gradient(circle at 70% 20%, rgba(30,58,138,0.07) 0%, transparent 50%), radial-gradient(circle at 20% 80%, rgba(11,44,101,0.05) 0%, transparent 50%)",
           }}
         />
 
@@ -260,7 +257,7 @@ export default function RegisterPage() {
               <div className="relative">
                 <span
                   className={`absolute inset-y-0 left-0 flex items-center pl-4 transition-colors duration-200 ${
-                    focused === "name" ? "text-teal-500" : "text-gray-400"
+                    focused === "name" ? "text-blue-500" : "text-gray-400"
                   }`}
                 >
                   <UserIcon className="h-5 w-5" />
@@ -292,7 +289,7 @@ export default function RegisterPage() {
               <div className="relative">
                 <span
                   className={`absolute inset-y-0 left-0 flex items-center pl-4 transition-colors duration-200 ${
-                    focused === "email" ? "text-teal-500" : "text-gray-400"
+                    focused === "email" ? "text-blue-500" : "text-gray-400"
                   }`}
                 >
                   <EnvelopeIcon className="h-5 w-5" />
@@ -324,7 +321,7 @@ export default function RegisterPage() {
               <div className="relative">
                 <span
                   className={`absolute inset-y-0 left-0 flex items-center pl-4 transition-colors duration-200 ${
-                    focused === "password" ? "text-teal-500" : "text-gray-400"
+                    focused === "password" ? "text-blue-500" : "text-gray-400"
                   }`}
                 >
                   <LockClosedIcon className="h-5 w-5" />
@@ -369,7 +366,7 @@ export default function RegisterPage() {
               <div className="relative">
                 <span
                   className={`absolute inset-y-0 left-0 flex items-center pl-4 transition-colors duration-200 ${
-                    focused === "role" ? "text-teal-500" : "text-gray-400"
+                    focused === "role" ? "text-blue-500" : "text-gray-400"
                   }`}
                 >
                   <ShieldCheckIcon className="h-5 w-5" />
@@ -404,10 +401,10 @@ export default function RegisterPage() {
               style={{
                 background: loading
                   ? "#6b7280"
-                  : "linear-gradient(135deg, #0d9488 0%, #0f766e 100%)",
+                  : "linear-gradient(135deg, #0b2c65 0%, #1e3a8a 100%)",
                 boxShadow: loading
                   ? "none"
-                  : "0 8px 30px rgba(13, 148, 136, 0.4)",
+                  : "0 8px 30px rgba(11, 44, 101, 0.4)",
               }}
             >
               <span className="absolute inset-0 w-full h-full transition-all duration-500 ease-in-out bg-white opacity-0 group-hover:opacity-10 group-active:opacity-20" />

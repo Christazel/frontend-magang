@@ -50,14 +50,14 @@ export default function Home() {
             </div>
           </div>
 
-          <Link
-            href="/login"
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-all duration-200 hover:opacity-90"
-            style={{
-              background: "linear-gradient(135deg, #0d9488, #0f766e)",
-            }}
-          >
-            Masuk
+            <Link
+              href="/login"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-all duration-200 hover:opacity-90"
+              style={{
+                background: "linear-gradient(135deg, #0b2c65, #1e3a8a)",
+              }}
+            >
+              Masuk
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
@@ -69,7 +69,7 @@ export default function Home() {
           className="py-16 md:py-24 px-5 text-center"
           style={{
             background:
-              "linear-gradient(160deg, #0f4c35 0%, #0d9488 60%, #0f766e 100%)",
+              "linear-gradient(160deg, #0b2c65 0%, #1e40af 60%, #1e3a8a 100%)",
           }}
         >
           <div className="max-w-2xl mx-auto">
@@ -85,9 +85,9 @@ export default function Home() {
             </div>
 
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white leading-tight">
-              Sistem Informasi Magang
+              SIPMA Melawi
             </h1>
-            <p className="text-teal-100 font-semibold mt-1 text-base">
+            <p className="text-blue-100 font-semibold mt-1 text-base">
               Dinas Pendidikan Kabupaten Melawi
             </p>
 
@@ -102,7 +102,7 @@ export default function Home() {
                 className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-base transition-all duration-200 hover:scale-105"
                 style={{
                   background: "rgba(255,255,255,1)",
-                  color: "#0d9488",
+                  color: "#0b2c65",
                   boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
                 }}
               >
@@ -263,7 +263,7 @@ export default function Home() {
             <div className="mt-6 pt-4 border-t border-gray-700">
               <p className="text-[11px] text-gray-500 mb-1 font-semibold uppercase tracking-wider">Platform ini</p>
               <p className="text-xs text-gray-500 leading-relaxed">
-                Sistem Informasi Magang — digunakan untuk mengelola
+                SIPMA (Sistem Informasi Peserta Magang) — digunakan untuk mengelola
                 presensi dan laporan peserta magang di lingkungan Disdikbud Melawi.
               </p>
             </div>

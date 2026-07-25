@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Sistem Magang",
-  description: "Sistem Informasi Manajemen Magang",
+  title: "SIPMA Melawi",
+  description: "Sistem Informasi Peserta Magang Dinas Pendidikan Kabupaten Melawi",
 };
 
 export const viewport: Viewport = {
