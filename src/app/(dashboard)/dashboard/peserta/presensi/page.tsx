@@ -188,7 +188,7 @@ export default function PresensiPage() {
           {/* Header strip teal */}
           <div
             className="px-6 py-5 text-white"
-            style={{ background: "linear-gradient(135deg, #0f4c35 0%, #0d9488 100%)" }}
+            style={{ background: "linear-gradient(135deg, #0f4c35 0%, #0b2c65 100%)" }}
           >
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center flex-shrink-0">
@@ -196,21 +196,21 @@ export default function PresensiPage() {
               </div>
               <div>
                 <h1 className="text-lg font-bold leading-tight">Presensi Harian</h1>
-                <p className="text-teal-200 text-xs">Catat kehadiran Anda hari ini</p>
+                <p className="text-blue-200 text-xs">Catat kehadiran Anda hari ini</p>
               </div>
             </div>
 
             {/* Jam WIB realtime */}
             <div className="bg-white/10 rounded-xl px-4 py-3 flex items-center justify-between">
               <div>
-                <p className="text-teal-200 text-[10px] font-semibold uppercase tracking-widest mb-0.5">
+                <p className="text-blue-200 text-[10px] font-semibold uppercase tracking-widest mb-0.5">
                   Waktu Sekarang (WIB)
                 </p>
                 <p className="text-white font-mono text-2xl font-bold tabular-nums tracking-wider">
                   {mounted && nowWib ? nowWib.time : "--:--:--"}
                 </p>
               </div>
-              <div className="text-right text-teal-100 text-xs leading-relaxed">
+              <div className="text-right text-blue-100 text-xs leading-relaxed">
                 <p>{mounted && nowWib ? nowWib.datePretty : "-"}</p>
               </div>
             </div>
@@ -293,7 +293,7 @@ export default function PresensiPage() {
             {/* Action Buttons */}
             <div className="space-y-2.5">
               {isDone ? (
-                <div className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-teal-50 border-2 border-teal-200 text-teal-700 font-semibold text-sm">
+                <div className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-blue-50 border-2 border-blue-200 text-blue-700 font-semibold text-sm">
                   <CheckCircleIcon className="w-5 h-5" />
                   Presensi Hari Ini Selesai
                 </div>

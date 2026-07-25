@@ -266,8 +266,8 @@ export default function LaporanPesertaPage() {
         <main className="flex-1 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
           {/* Header Title */}
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-2.5 bg-teal-100 rounded-xl">
-              <DocumentTextIcon className="w-6 h-6 text-teal-700" />
+            <div className="p-2.5 bg-blue-100 rounded-xl">
+              <DocumentTextIcon className="w-6 h-6 text-blue-700" />
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
@@ -293,7 +293,7 @@ export default function LaporanPesertaPage() {
                         ref={fileInputRef}
                         type="file"
                         onChange={(e) => setFile(e.target.files?.[0] || null)}
-                        className="w-full text-sm text-gray-600 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100 transition-colors border border-gray-200 rounded-xl"
+                        className="w-full text-sm text-gray-600 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-colors border border-gray-200 rounded-xl"
                         accept=".pdf,.doc,.docx,.xls,.xlsx"
                         required
                       />
@@ -327,7 +327,7 @@ export default function LaporanPesertaPage() {
                   {/* Catatan Upload */}
                   <div
                     className={`mt-5 rounded-xl border p-4 text-sm transition-colors duration-300 ${
-                      fileTooBig ? "border-rose-200 bg-rose-50 text-rose-700" : "border-teal-100 bg-teal-50 text-teal-800"
+                      fileTooBig ? "border-rose-200 bg-rose-50 text-rose-700" : "border-blue-100 bg-blue-50 text-blue-800"
                     }`}
                   >
                     <p className="font-bold mb-1">Catatan Upload</p>
@@ -336,7 +336,7 @@ export default function LaporanPesertaPage() {
                     </p>
 
                     {file && (
-                      <div className="mt-3 p-2 bg-white rounded-lg border border-teal-100 flex items-center justify-between">
+                      <div className="mt-3 p-2 bg-white rounded-lg border border-blue-100 flex items-center justify-between">
                         <span className="text-xs font-medium truncate max-w-[150px]">{file.name}</span>
                         <span className="text-xs font-bold whitespace-nowrap">
                           {fileSizeMB.toFixed(2)} MB {fileTooBig && <span className="text-rose-500 ml-1">!</span>}
@@ -378,7 +378,7 @@ export default function LaporanPesertaPage() {
                   />
 
                   {loadingList ? (
-                    <div className="flex flex-col items-center justify-center py-12 text-teal-600">
+                    <div className="flex flex-col items-center justify-center py-12 text-blue-600">
                       <ArrowPathIcon className="w-8 h-8 animate-spin mb-3" />
                       <p className="text-sm font-semibold">Memuat riwayat laporan...</p>
                     </div>

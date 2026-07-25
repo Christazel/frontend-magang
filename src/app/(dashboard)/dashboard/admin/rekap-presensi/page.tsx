@@ -92,14 +92,14 @@ export default function RekapPresensiPage() {
       <div className="flex-1 md:ml-64 flex flex-col min-w-0">
         <Navbar />
 
-        <main className="flex-1 mt-14 px-4 sm:px-6 lg:px-8 py-6 w-full max-w-7xl mx-auto">
+        <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 w-full max-w-7xl mx-auto">
           <div className="space-y-6">
             
             {/* Header Section */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-teal-100 rounded-xl">
-                  <ClockIcon className="w-6 h-6 text-teal-700" />
+                <div className="p-2.5 bg-blue-100 rounded-xl">
+                  <ClockIcon className="w-6 h-6 text-blue-700" />
                 </div>
                 <div>
                   <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
@@ -112,8 +112,8 @@ export default function RekapPresensiPage() {
               </div>
               
               <div className="flex items-center gap-2 self-start sm:self-auto">
-                <span className="text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-100 px-3 py-1.5 rounded-lg flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
+                <span className="text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100 px-3 py-1.5 rounded-lg flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
                   Total: {totalCount} Riwayat
                 </span>
               </div>
@@ -149,7 +149,7 @@ export default function RekapPresensiPage() {
 
                 {/* Loading State */}
                 {loading ? (
-                  <div className="flex flex-col items-center justify-center py-16 text-teal-600">
+                  <div className="flex flex-col items-center justify-center py-16 text-blue-600">
                     <ArrowPathIcon className="w-8 h-8 animate-spin mb-3" />
                     <p className="text-sm font-semibold">Memuat riwayat presensi...</p>
                   </div>
@@ -189,7 +189,7 @@ export default function RekapPresensiPage() {
                                   <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wider mb-1">Masuk</p>
                                   <p className="font-bold text-gray-900 font-mono">{p.jamMasuk || "-"}</p>
                                   {p.lokasiMasuk && (
-                                    <a href={`https://www.google.com/maps?q=${p.lokasiMasuk}`} target="_blank" rel="noopener noreferrer" className="mt-1 flex items-center gap-1 text-[11px] text-teal-600 hover:text-teal-700 hover:underline">
+                                    <a href={`https://www.google.com/maps?q=${p.lokasiMasuk}`} target="_blank" rel="noopener noreferrer" className="mt-1 flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-700 hover:underline">
                                       <MapPinIcon className="w-3 h-3" /> Buka Peta
                                     </a>
                                   )}
@@ -198,7 +198,7 @@ export default function RekapPresensiPage() {
                                   <p className="text-xs font-semibold text-rose-600 uppercase tracking-wider mb-1">Keluar</p>
                                   <p className="font-bold text-gray-900 font-mono">{p.jamKeluar || "-"}</p>
                                   {p.lokasiKeluar && (
-                                    <a href={`https://www.google.com/maps?q=${p.lokasiKeluar}`} target="_blank" rel="noopener noreferrer" className="mt-1 flex items-center gap-1 text-[11px] text-teal-600 hover:text-teal-700 hover:underline">
+                                    <a href={`https://www.google.com/maps?q=${p.lokasiKeluar}`} target="_blank" rel="noopener noreferrer" className="mt-1 flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-700 hover:underline">
                                       <MapPinIcon className="w-3 h-3" /> Buka Peta
                                     </a>
                                   )}
@@ -220,14 +220,14 @@ export default function RekapPresensiPage() {
                             </thead>
                             <tbody className="divide-y divide-gray-50">
                               {group.presensi.map((p) => (
-                                <tr key={p._id} className="hover:bg-teal-50/30 transition-colors">
+                                <tr key={p._id} className="hover:bg-blue-50/30 transition-colors">
                                   <td className="px-5 py-4 font-medium text-gray-900">
                                     {p.tanggal ? new Date(p.tanggal).toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' }) : "-"}
                                   </td>
                                   <td className="px-5 py-4">
                                     <p className="font-bold font-mono text-emerald-700 text-lg leading-none mb-1">{p.jamMasuk || "-"}</p>
                                     {p.lokasiMasuk && (
-                                      <a href={`https://www.google.com/maps?q=${p.lokasiMasuk}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[11px] font-medium text-teal-600 hover:text-teal-700 hover:underline bg-teal-50 px-2 py-0.5 rounded-full">
+                                      <a href={`https://www.google.com/maps?q=${p.lokasiMasuk}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-600 hover:text-blue-700 hover:underline bg-blue-50 px-2 py-0.5 rounded-full">
                                         <MapPinIcon className="w-3 h-3" /> Koordinat Lokasi
                                       </a>
                                     )}
@@ -235,7 +235,7 @@ export default function RekapPresensiPage() {
                                   <td className="px-5 py-4">
                                     <p className="font-bold font-mono text-rose-700 text-lg leading-none mb-1">{p.jamKeluar || "-"}</p>
                                     {p.lokasiKeluar && (
-                                      <a href={`https://www.google.com/maps?q=${p.lokasiKeluar}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[11px] font-medium text-teal-600 hover:text-teal-700 hover:underline bg-teal-50 px-2 py-0.5 rounded-full">
+                                      <a href={`https://www.google.com/maps?q=${p.lokasiKeluar}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-600 hover:text-blue-700 hover:underline bg-blue-50 px-2 py-0.5 rounded-full">
                                         <MapPinIcon className="w-3 h-3" /> Koordinat Lokasi
                                       </a>
                                     )}

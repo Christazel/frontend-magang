@@ -121,7 +121,7 @@ export default function LoginPage() {
               <h1 className="text-white text-xl font-bold leading-tight">
                 Dinas Pendidikan
               </h1>
-              <h2 className="text-teal-200 text-base font-medium">
+              <h2 className="text-blue-200 text-base font-medium">
                 Kabupaten Melawi
               </h2>
             </div>
@@ -131,7 +131,7 @@ export default function LoginPage() {
         {/* Hero text */}
         <div className="relative z-10 space-y-6">
           <div className="animate-fade-in-up" style={{ animationDelay: "0.2s", opacity: 0 }}>
-            <p className="text-teal-200 text-sm font-semibold tracking-widest uppercase mb-3">
+            <p className="text-blue-200 text-sm font-semibold tracking-widest uppercase mb-3">
               Platform Digital
             </p>
             <h2 className="text-white text-4xl font-bold leading-tight">
@@ -155,7 +155,7 @@ export default function LoginPage() {
                 style={{ animationDelay: `${0.4 + i * 0.15}s`, opacity: 0 }}
               >
                 <div className="flex-shrink-0 w-10 h-10 rounded-xl glass flex items-center justify-center">
-                  <f.icon className="w-5 h-5 text-teal-300" />
+                  <f.icon className="w-5 h-5 text-blue-300" />
                 </div>
                 <div>
                   <p className="text-white font-semibold text-sm">{f.title}</p>
@@ -226,7 +226,7 @@ export default function LoginPage() {
               <div className="relative">
                 <span
                   className={`absolute inset-y-0 left-0 flex items-center pl-4 transition-colors duration-200 ${
-                    focused === "email" ? "text-teal-500" : "text-gray-400"
+                    focused === "email" ? "text-blue-500" : "text-gray-400"
                   }`}
                 >
                   <EnvelopeIcon className="h-5 w-5" />
@@ -242,7 +242,7 @@ export default function LoginPage() {
                   onBlur={() => setFocused(null)}
                   className={`w-full pl-12 pr-4 py-3.5 bg-white border-2 rounded-xl text-gray-800 placeholder-gray-400 text-sm transition-all duration-200 outline-none shadow-sm ${
                     focused === "email"
-                      ? "border-teal-500 shadow-teal-100 shadow-lg"
+                      ? "border-blue-500 shadow-blue-100 shadow-lg"
                       : "border-gray-200 hover:border-gray-300"
                   }`}
                   required
@@ -259,7 +259,7 @@ export default function LoginPage() {
               <div className="relative">
                 <span
                   className={`absolute inset-y-0 left-0 flex items-center pl-4 transition-colors duration-200 ${
-                    focused === "password" ? "text-teal-500" : "text-gray-400"
+                    focused === "password" ? "text-blue-500" : "text-gray-400"
                   }`}
                 >
                   <LockClosedIcon className="h-5 w-5" />
@@ -275,7 +275,7 @@ export default function LoginPage() {
                   onBlur={() => setFocused(null)}
                   className={`w-full pl-12 pr-12 py-3.5 bg-white border-2 rounded-xl text-gray-800 placeholder-gray-400 text-sm transition-all duration-200 outline-none shadow-sm ${
                     focused === "password"
-                      ? "border-teal-500 shadow-teal-100 shadow-lg"
+                      ? "border-blue-500 shadow-blue-100 shadow-lg"
                       : "border-gray-200 hover:border-gray-300"
                   }`}
                   required
@@ -343,7 +343,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => router.push("/register")}
-                className="text-teal-600 font-semibold hover:text-teal-700 transition-colors hover:underline"
+                className="text-blue-600 font-semibold hover:text-blue-700 transition-colors hover:underline"
                 disabled={loading}
               >
                 Daftar Sekarang
