@@ -92,7 +92,7 @@ export default function RekapPresensiPage() {
       <div className="flex-1 md:ml-64 flex flex-col min-w-0">
         <Navbar />
 
-        <main className="flex-1 mt-14 px-4 sm:px-6 lg:px-8 py-6 w-full max-w-7xl mx-auto">
+        <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 w-full max-w-7xl mx-auto">
           <div className="space-y-6">
             
             {/* Header Section */}
