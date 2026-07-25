@@ -33,14 +33,15 @@ const csvEscape = (v: unknown) => {
   return s;
 };
 
-function normalizeFileId(fileId: any): string | null {
+function normalizeFileId(fileId: unknown): string | null {
   if (!fileId) return null;
   if (typeof fileId === "string") return fileId;
   if (typeof fileId === "object") {
-    if (typeof fileId._id === "string") return fileId._id;
-    if (typeof fileId.$oid === "string") return fileId.$oid;
-    if (typeof fileId.toString === "function") {
-      const s = fileId.toString();
+    const obj = fileId as Record<string, unknown>;
+    if (typeof obj._id === "string") return obj._id;
+    if (typeof obj.$oid === "string") return obj.$oid;
+    if (fileId && typeof (fileId as any).toString === "function") {
+      const s = (fileId as any).toString();
       if (s && s !== "[object Object]") return s;
     }
   }

@@ -46,7 +46,7 @@ export default function FeedbackAdminPage() {
       toast.success("Feedback berhasil dikirim ke peserta!");
       setSelectedUser("");
       setFeedback("");
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error(getErrorMessage(error));
     } finally {
       setLoading(false);

@@ -43,15 +43,16 @@ function getFilenameFromContentDisposition(header: string | null): string | null
 }
 
 /** ✅ normalize ObjectId (string / object) */
-function normalizeId(id: any): string | null {
+function normalizeId(id: unknown): string | null {
   if (!id) return null;
   if (typeof id === "string") return id;
 
   if (typeof id === "object") {
-    if (typeof id._id === "string") return id._id;
-    if (typeof id.$oid === "string") return id.$oid;
-    if (typeof id.toString === "function") {
-      const s = id.toString();
+    const obj = id as Record<string, unknown>;
+    if (typeof obj._id === "string") return obj._id;
+    if (typeof obj.$oid === "string") return obj.$oid;
+    if (id && typeof (id as any).toString === "function") {
+      const s = (id as any).toString();
       if (s && s !== "[object Object]") return s;
     }
   }
@@ -137,9 +138,9 @@ export default function LaporanPesertaPage() {
       setDeskripsi("");
       if (fileInputRef.current) fileInputRef.current.value = "";
       await getLaporanList();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      toast.error(`Gagal upload laporan: ${err?.message || "Unknown error"}`);
+      toast.error(`Gagal upload laporan: ${getErrorMessage(err)}`);
     } finally {
       setIsUploading(false);
     }
@@ -198,9 +199,9 @@ export default function LaporanPesertaPage() {
       a.click();
       a.remove();
       setTimeout(() => window.URL.revokeObjectURL(url), 800);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      toast.error(`Gagal download: ${err?.message || "Unknown error"}`);
+      toast.error(`Gagal download: ${getErrorMessage(err)}`);
     }
   };
 
@@ -225,14 +226,14 @@ export default function LaporanPesertaPage() {
       const fd = new FormData();
       fd.append("file", selectedFile);
 
-      const res = await laporanService.reuploadFile(laporanId, fd);
+      await laporanService.reuploadFile(laporanId, fd);
 
       toast.success("Upload revisi berhasil! Status laporan kembali ke pending.");
       setResubmitForId(null);
       await getLaporanList();
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      toast.error(`Gagal upload revisi: ${e?.message || "Unknown error"}`);
+      toast.error(`Gagal upload revisi: ${getErrorMessage(e)}`);
     } finally {
       setIsResubmitting(false);
     }
@@ -250,7 +251,6 @@ export default function LaporanPesertaPage() {
 
   useEffect(() => {
     getLaporanList();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fileSizeMB = file ? bytesToMB(file.size) : 0;
@@ -450,7 +450,7 @@ export default function LaporanPesertaPage() {
                                   <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
                                   <p className="text-xs font-bold text-rose-800 uppercase tracking-wide">Catatan Admin</p>
                                 </div>
-                                <p className="text-sm text-rose-700 leading-relaxed font-medium">"{lap.adminCatatan}"</p>
+                                <p className="text-sm text-rose-700 leading-relaxed font-medium">&quot;{lap.adminCatatan}&quot;</p>
                                 {isRevisi && (
                                   <p className="mt-2 text-xs text-rose-600 bg-white/60 p-2 rounded-lg border border-rose-100 font-semibold inline-block">
                                     Tindakan diperlukan: Silakan upload ulang file revisi Anda.

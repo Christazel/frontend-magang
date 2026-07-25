@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
 import Sidebar from "@/components/layout/Sidebar";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -27,7 +26,6 @@ type SortBy = "hadir" | "tugas" | "name";
 type SortOrder = "asc" | "desc";
 
 export default function ManajemenPesertaPage() {
-  const { user } = useAuth();
   const [peserta, setPeserta] = useState<Peserta[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -64,14 +62,13 @@ export default function ManajemenPesertaPage() {
 
   useEffect(() => {
     fetchPeserta();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 🔍 Filter & Sort (memoized)
   const filteredPeserta = useMemo(() => {
     const q = debouncedSearch.toLowerCase();
 
-    let list = peserta.filter((p) => {
+    const list = peserta.filter((p) => {
       if (!q) return true;
       return (
         p.name?.toLowerCase().includes(q) || p.email?.toLowerCase().includes(q)

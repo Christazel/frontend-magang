@@ -72,7 +72,7 @@ export default function RekapPresensiPage() {
       setTotalCount(meta.totalCount || 0);
       setTotalPages(meta.totalPages || 1);
       setData(Array.isArray(response.data) ? response.data : []);
-    } catch (e: any) {
+    } catch (e: unknown) {
       setError(getErrorMessage(e));
     } finally {
       setLoading(false);

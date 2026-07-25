@@ -5,7 +5,7 @@ import Sidebar from "@/components/layout/Sidebar";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { ChatBubbleLeftRightIcon, CheckBadgeIcon } from "@heroicons/react/24/outline";
-import { Card, CardHeader, CardBody } from "@/components/ui/Card";
+import { Card, CardBody } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { feedbackService, getErrorMessage } from "@/lib/api";
 import type { Feedback } from "@/types";

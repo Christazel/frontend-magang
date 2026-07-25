@@ -59,7 +59,7 @@ export function getErrorMessage(error: unknown): string {
 }
 
 // ---- Helper: baca pagination meta dari response headers ----
-export function parsePaginationHeaders(headers: Record<string, any>): Partial<PaginationMeta> {
+export function parsePaginationHeaders(headers: Record<string, unknown>): Partial<PaginationMeta> {
   return {
     totalCount: Number(headers["x-total-count"] ?? 0),
     totalPages: Number(headers["x-total-pages"] ?? 1),
