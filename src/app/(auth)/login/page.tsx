@@ -71,17 +71,17 @@ export default function LoginPage() {
       <div
         className="hidden lg:flex lg:w-1/2 relative overflow-hidden flex-col justify-between p-12"
         style={{
-          background: "linear-gradient(135deg, #0f4c35 0%, #0d9488 50%, #0f766e 100%)",
+          background: "linear-gradient(135deg, #061c47 0%, #0b2c65 50%, #1e3a8a 100%)",
         }}
       >
         {/* Decorative blobs */}
         <div
           className="absolute -top-20 -left-20 w-80 h-80 rounded-full opacity-20 animate-float"
-          style={{ background: "radial-gradient(circle, #5eead4, transparent)" }}
+          style={{ background: "radial-gradient(circle, #60a5fa, transparent)" }}
         />
         <div
           className="absolute bottom-10 -right-16 w-96 h-96 rounded-full opacity-15 animate-float-slow"
-          style={{ background: "radial-gradient(circle, #99f6e4, transparent)" }}
+          style={{ background: "#93c5fd" }}
         />
         <div
           className="absolute top-1/2 left-1/3 w-40 h-40 rounded-full opacity-10"
@@ -135,10 +135,10 @@ export default function LoginPage() {
               Platform Digital
             </p>
             <h2 className="text-white text-4xl font-bold leading-tight">
-              Sistem Informasi
+              SIPMA
               <span className="block text-transparent bg-clip-text"
-                style={{ backgroundImage: "linear-gradient(90deg, #5eead4, #99f6e4)" }}>
-                Magang Terpadu
+                style={{ backgroundImage: "linear-gradient(90deg, #93c5fd, #bfdbfe)" }}>
+                Melawi
               </span>
             </h2>
             <p className="text-white/70 text-base mt-4 leading-relaxed max-w-sm">
@@ -305,8 +305,8 @@ export default function LoginPage() {
               style={{
                 background: loading
                   ? "#6b7280"
-                  : "linear-gradient(135deg, #0d9488 0%, #0f766e 100%)",
-                boxShadow: loading ? "none" : "0 8px 30px rgba(13, 148, 136, 0.4)",
+                  : "linear-gradient(135deg, #0b2c65 0%, #1e3a8a 100%)",
+                boxShadow: loading ? "none" : "0 8px 30px rgba(11, 44, 101, 0.4)",
               }}
             >
               {/* Hover shimmer effect */}

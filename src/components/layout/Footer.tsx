@@ -11,7 +11,7 @@ export default function Footer() {
     >
       &copy; {new Date().getFullYear()}{" "}
       <span className="font-semibold" style={{ color: "#0d9488" }}>
-        Sistem Informasi Magang
+        SIPMA Melawi
       </span>{" "}
       &mdash; Dinas Pendidikan Kabupaten Melawi
     </footer>

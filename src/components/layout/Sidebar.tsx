@@ -46,8 +46,8 @@ export default function Sidebar() {
         aria-label="Toggle Sidebar"
         className="md:hidden fixed top-3.5 left-4 z-50 w-9 h-9 flex items-center justify-center rounded-xl text-white transition-all duration-200 shadow-lg"
         style={{
-          background: "linear-gradient(135deg, #0d9488, #0f766e)",
-          boxShadow: "0 4px 14px rgba(13,148,136,0.4)",
+          background: "linear-gradient(135deg, #0b2c65, #1e3a8a)",
+          boxShadow: "0 4px 14px rgba(11,44,101,0.4)",
         }}
       >
         {isOpen ? <X size={20} /> : <Menu size={20} />}
@@ -61,7 +61,7 @@ export default function Sidebar() {
           w-64 fixed top-0 left-0 z-40 h-full flex flex-col`}
         style={{
           background:
-            "linear-gradient(180deg, #0f4c35 0%, #0d9488 55%, #0f766e 100%)",
+            "linear-gradient(180deg, #061c47 0%, #0b2c65 55%, #1e3a8a 100%)",
         }}
       >
         {/* Grid overlay */}
@@ -96,7 +96,7 @@ export default function Sidebar() {
                 className="inline-block text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full mt-0.5"
                 style={{
                   background: "rgba(255,255,255,0.15)",
-                  color: "#5eead4",
+                  color: "#93c5fd",
                 }}
               >
                 {user.role}
@@ -138,12 +138,12 @@ export default function Sidebar() {
                     <Icon
                       size={18}
                       className={`flex-shrink-0 transition-colors ${
-                        active ? "text-teal-300" : "text-white/50 group-hover:text-teal-300"
+                        active ? "text-blue-300" : "text-white/50 group-hover:text-blue-300"
                       }`}
                     />
                     <span className="text-sm font-medium flex-1">{item.label}</span>
                     {active && (
-                      <ChevronRight size={14} className="text-teal-300 flex-shrink-0" />
+                      <ChevronRight size={14} className="text-blue-300 flex-shrink-0" />
                     )}
                   </Link>
                 </li>

@@ -12,7 +12,7 @@ export default function Navbar() {
   // Derive current page title from menu items
   const menuItems = user ? getMenuItems(user.role) : [];
   const currentPage = menuItems.find((item) => item.href === pathname)?.label;
-  const pageTitle = currentPage ?? "Sistem Informasi Magang";
+  const pageTitle = currentPage ?? "SIPMA Melawi";
 
   return (
     <>

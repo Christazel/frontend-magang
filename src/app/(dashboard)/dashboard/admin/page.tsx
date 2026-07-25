@@ -79,12 +79,12 @@ export default function AdminDashboard() {
     datasets: [
       {
         data: [stats.totalInterns, stats.reportsSubmitted],
-        backgroundColor: ["rgba(13, 148, 136, 0.85)", "rgba(5, 150, 105, 0.85)"],
-        borderColor: ["rgba(13, 148, 136, 1)", "rgba(5, 150, 105, 1)"],
+        backgroundColor: ["rgba(11, 44, 101, 0.85)", "rgba(37, 99, 235, 0.85)"],
+        borderColor: ["rgba(11, 44, 101, 1)", "rgba(37, 99, 235, 1)"],
         borderWidth: 2,
         hoverBackgroundColor: [
-          "rgba(15, 118, 110, 0.95)",
-          "rgba(4, 120, 87, 0.95)",
+          "rgba(6, 28, 71, 0.95)",
+          "rgba(29, 78, 216, 0.95)",
         ],
       },
     ],
@@ -96,13 +96,13 @@ export default function AdminDashboard() {
       {
         label: "Jumlah",
         data: [stats.totalInterns, stats.reportsSubmitted],
-        backgroundColor: ["rgba(13, 148, 136, 0.85)", "rgba(5, 150, 105, 0.85)"],
-        borderColor: ["rgba(13, 148, 136, 1)", "rgba(5, 150, 105, 1)"],
+        backgroundColor: ["rgba(11, 44, 101, 0.85)", "rgba(37, 99, 235, 0.85)"],
+        borderColor: ["rgba(11, 44, 101, 1)", "rgba(37, 99, 235, 1)"],
         borderWidth: 2,
         borderRadius: 8,
         hoverBackgroundColor: [
-          "rgba(15, 118, 110, 0.95)",
-          "rgba(4, 120, 87, 0.95)",
+          "rgba(6, 28, 71, 0.95)",
+          "rgba(29, 78, 216, 0.95)",
         ],
       },
     ],
@@ -164,17 +164,17 @@ export default function AdminDashboard() {
             <div
               className="relative overflow-hidden rounded-2xl p-8 shadow-lg"
               style={{
-                background: "linear-gradient(135deg, #0d9488 0%, #0f766e 100%)",
+                background: "linear-gradient(135deg, #0b2c65 0%, #1e3a8a 100%)",
               }}
             >
               {/* Background Decoration */}
               <div
                 className="absolute -right-10 -top-10 w-64 h-64 rounded-full blur-3xl opacity-20 pointer-events-none"
-                style={{ background: "#5eead4" }}
+                style={{ background: "#60a5fa" }}
               />
               <div
                 className="absolute -bottom-10 right-20 w-48 h-48 rounded-full blur-2xl opacity-20 pointer-events-none"
-                style={{ background: "#99f6e4" }}
+                style={{ background: "#93c5fd" }}
               />
 
               <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
