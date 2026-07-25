@@ -49,7 +49,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               w-full py-2.5 bg-white border-2 rounded-xl text-gray-800 text-sm shadow-sm
               placeholder:text-gray-400
               transition-all duration-200 outline-none
-              focus:border-teal-500 focus:shadow-[0_0_0_3px_rgba(20,184,166,0.12)]
+              focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(20,184,166,0.12)]
               disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed
               ${error ? "border-red-400 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(239,68,68,0.12)]" : "border-gray-200 hover:border-gray-300"}
               ${leftIcon ? "pl-10" : "pl-4"}

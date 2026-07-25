@@ -100,10 +100,10 @@ interface StatCardProps {
 
 const colorMap = {
   teal: {
-    bg: "bg-teal-50",
-    icon: "text-teal-600",
-    ring: "ring-teal-100",
-    trend: "text-teal-600",
+    bg: "bg-blue-50",
+    icon: "text-blue-600",
+    ring: "ring-blue-100",
+    trend: "text-blue-600",
   },
   blue: {
     bg: "bg-blue-50",

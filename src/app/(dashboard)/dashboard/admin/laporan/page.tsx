@@ -106,7 +106,7 @@ function ReviewModal({
           <div className="min-w-0">
             <h2 className="text-base sm:text-lg font-bold text-gray-900">Nilai Laporan Peserta</h2>
             <p className="mt-1 text-sm text-gray-600">
-              <span className="font-semibold text-teal-800">{row.user?.name}</span> <span className="text-gray-400">({row.user?.email})</span>
+              <span className="font-semibold text-blue-800">{row.user?.name}</span> <span className="text-gray-400">({row.user?.email})</span>
             </p>
           </div>
           <button
@@ -124,7 +124,7 @@ function ReviewModal({
               <select
                 value={status}
                 onChange={(e) => onChangeStatus(e.target.value as ReviewStatus)}
-                className="w-full text-sm p-2.5 rounded-xl bg-white border border-gray-200 text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-colors"
+                className="w-full text-sm p-2.5 rounded-xl bg-white border border-gray-200 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
               >
                 <option value="pending">Pending (Belum Dinilai)</option>
                 <option value="sesuai">Sesuai</option>
@@ -135,7 +135,7 @@ function ReviewModal({
             <div className="sm:text-right">
               <label className="text-sm font-semibold text-gray-700 block mb-1.5">Tanggal Upload</label>
               <div className="mt-1 inline-flex justify-end">
-                <span className="text-xs bg-teal-50 text-teal-700 border border-teal-100 px-3 py-1.5 rounded-full font-medium">
+                <span className="text-xs bg-blue-50 text-blue-700 border border-blue-100 px-3 py-1.5 rounded-full font-medium">
                   {fmtTanggal(row.createdAt)}
                 </span>
               </div>
@@ -149,7 +149,7 @@ function ReviewModal({
               onChange={(e) => onChangeCatatan(e.target.value)}
               placeholder="Contoh: Lampirkan tanda tangan pembimbing di bagian penutup..."
               rows={4}
-              className="w-full text-sm p-3 rounded-xl bg-white border border-gray-200 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-colors resize-none"
+              className="w-full text-sm p-3 rounded-xl bg-white border border-gray-200 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors resize-none"
             />
             <p className="mt-1.5 text-[11px] text-gray-500 font-medium">
               Jika Revisi, berikan petunjuk yang jelas. Catatan ini akan terbaca oleh peserta.
@@ -382,8 +382,8 @@ export default function RekapLaporanAdminPage() {
         <main className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-teal-100 rounded-xl">
-                <DocumentTextIcon className="w-6 h-6 text-teal-700" />
+              <div className="p-2.5 bg-blue-100 rounded-xl">
+                <DocumentTextIcon className="w-6 h-6 text-blue-700" />
               </div>
               <div>
                 <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Rekap Laporan Tugas</h1>
@@ -391,9 +391,9 @@ export default function RekapLaporanAdminPage() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="hidden sm:flex px-3 py-1.5 rounded-lg bg-teal-50 border border-teal-100 items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
-                <span className="text-xs font-semibold text-teal-700">Total: {totalCount} Laporan</span>
+              <div className="hidden sm:flex px-3 py-1.5 rounded-lg bg-blue-50 border border-blue-100 items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                <span className="text-xs font-semibold text-blue-700">Total: {totalCount} Laporan</span>
               </div>
               <Button variant="secondary" size="sm" onClick={() => fetchLaporanAdmin(false)} disabled={loading} leftIcon={<ArrowPathIcon className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`}/>}>Refresh</Button>
             </div>
@@ -416,7 +416,7 @@ export default function RekapLaporanAdminPage() {
                     type="date"
                     value={tanggal}
                     onChange={(e) => { setTanggal(e.target.value); setPage(1); }}
-                    className="w-full text-sm p-2.5 rounded-xl bg-white border border-gray-200 text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-colors"
+                    className="w-full text-sm p-2.5 rounded-xl bg-white border border-gray-200 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
                   />
                 </div>
                 <div className="md:col-span-2">
@@ -424,7 +424,7 @@ export default function RekapLaporanAdminPage() {
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as SortOption)}
-                    className="w-full text-sm p-2.5 rounded-xl bg-white border border-gray-200 text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-colors"
+                    className="w-full text-sm p-2.5 rounded-xl bg-white border border-gray-200 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
                   >
                     <option value="terbaru">Terbaru</option>
                     <option value="terlama">Terlama</option>
@@ -440,7 +440,7 @@ export default function RekapLaporanAdminPage() {
 
           <Card>
             {loading ? (
-              <div className="flex flex-col items-center justify-center py-16 text-teal-600">
+              <div className="flex flex-col items-center justify-center py-16 text-blue-600">
                 <ArrowPathIcon className="w-8 h-8 animate-spin mb-3" />
                 <p className="text-sm font-semibold">Memuat data laporan...</p>
               </div>

@@ -1,18 +1,10 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { BellIcon } from "@heroicons/react/24/outline";
-import { getMenuItems } from "@/constants/menu";
 
 export default function Navbar() {
-  const pathname = usePathname();
   const { user } = useAuth();
-
-  // Derive current page title from menu items
-  const menuItems = user ? getMenuItems(user.role) : [];
-  const currentPage = menuItems.find((item) => item.href === pathname)?.label;
-  const pageTitle = currentPage ?? "SIPMA Melawi";
 
   return (
     <>
@@ -20,24 +12,30 @@ export default function Navbar() {
       <header
         className="fixed top-0 left-0 right-0 md:left-64 z-30 h-14 flex items-center justify-between px-5 md:px-8"
         style={{
-          background: "rgba(255,255,255,0.85)",
-          backdropFilter: "blur(16px)",
-          WebkitBackdropFilter: "blur(16px)",
+          background: "rgba(255,255,255,0.88)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
           borderBottom: "1px solid rgba(0,0,0,0.06)",
           boxShadow: "0 1px 20px rgba(0,0,0,0.04)",
         }}
       >
-        {/* Left: page title */}
+        {/* Left: Brand + greeting */}
         <div className="flex items-center gap-3">
           {/* Spacer for hamburger on mobile */}
           <div className="w-8 md:hidden" />
-          <div>
-            <h1 className="text-gray-900 font-bold text-base md:text-lg leading-tight">
-              {pageTitle}
-            </h1>
-            <p className="hidden md:block text-[11px] text-gray-400 font-medium leading-none mt-0.5">
-              Dinas Pendidikan Kabupaten Melawi
-            </p>
+          <div className="flex items-center gap-2">
+            {/* Brand dot accent */}
+            <span
+              className="hidden md:inline-flex w-2 h-2 rounded-full animate-pulse"
+              style={{ background: "linear-gradient(135deg, #0b2c65, #0b2c65)" }}
+            />
+            <span className="hidden md:block text-sm font-semibold text-gray-700 tracking-tight">
+              Dashboard SIPMA Melawi
+            </span>
+            {/* Mobile: just show brand */}
+            <span className="md:hidden text-sm font-bold text-gray-800 tracking-tight">
+              SIPMA
+            </span>
           </div>
         </div>
 
@@ -45,7 +43,7 @@ export default function Navbar() {
         <div className="flex items-center gap-3">
           {/* Bell notification icon */}
           <button
-            className="relative w-9 h-9 rounded-xl flex items-center justify-center text-gray-500 hover:text-teal-600 hover:bg-teal-50 transition-all duration-200"
+            className="relative w-9 h-9 rounded-xl flex items-center justify-center text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
             aria-label="Notifikasi"
           >
             <BellIcon className="w-5 h-5" />
@@ -59,7 +57,7 @@ export default function Navbar() {
               <div
                 className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
                 style={{
-                  background: "linear-gradient(135deg, #0d9488, #0f766e)",
+                  background: "linear-gradient(135deg, #0b2c65, #1e3a8a)",
                 }}
               >
                 {user.name?.charAt(0).toUpperCase()}

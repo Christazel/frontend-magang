@@ -24,19 +24,19 @@ export const Button: React.FC<ButtonProps> = ({
 
   const variants: Record<string, string> = {
     primary:
-      "text-white focus:ring-teal-500 shadow-lg",
+      "text-white focus:ring-blue-500 shadow-lg",
     secondary:
-      "bg-white text-gray-700 border border-gray-200 hover:border-gray-300 hover:bg-gray-50 focus:ring-teal-500 shadow-sm",
+      "bg-white text-gray-700 border border-gray-200 hover:border-gray-300 hover:bg-gray-50 focus:ring-blue-500 shadow-sm",
     danger:
       "text-white focus:ring-red-500 shadow-lg",
     ghost:
-      "bg-transparent text-gray-600 hover:bg-gray-100 hover:text-gray-900 shadow-none focus:ring-teal-500",
+      "bg-transparent text-gray-600 hover:bg-gray-100 hover:text-gray-900 shadow-none focus:ring-blue-500",
     outline:
-      "bg-transparent border-2 border-teal-500 text-teal-600 hover:bg-teal-50 focus:ring-teal-500",
+      "bg-transparent border-2 border-blue-500 text-blue-600 hover:bg-blue-50 focus:ring-blue-500",
   };
 
   const gradients: Record<string, string> = {
-    primary: "linear-gradient(135deg, #0d9488 0%, #0f766e 100%)",
+    primary: "linear-gradient(135deg, #0b2c65 0%, #1e3a8a 100%)",
     danger: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
   };
 

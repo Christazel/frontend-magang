@@ -181,20 +181,20 @@ export default function AdminDashboard() {
                 <div>
                   <div className="flex items-center gap-3 mb-2">
                     <div className="p-2.5 bg-white/10 rounded-xl backdrop-blur-md border border-white/20">
-                      <Activity className="w-6 h-6 text-teal-100" />
+                      <Activity className="w-6 h-6 text-blue-100" />
                     </div>
                     <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
                       Selamat Datang, {user?.name || "Admin"}!
                     </h1>
                   </div>
-                  <p className="text-teal-100/90 md:ml-[3.25rem] text-sm leading-relaxed max-w-xl">
+                  <p className="text-blue-100/90 md:ml-[3.25rem] text-sm leading-relaxed max-w-xl">
                     Pantau aktivitas dan perkembangan seluruh peserta magang Anda
                     melalui dashboard analitik terpusat ini.
                   </p>
                 </div>
                 <div className="shrink-0 md:self-end">
                   <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white text-xs font-semibold tracking-wide uppercase backdrop-blur-md">
-                    <span className="w-1.5 h-1.5 rounded-full bg-teal-300 animate-pulse" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-300 animate-pulse" />
                     Role: {user?.role}
                   </span>
                 </div>
@@ -209,9 +209,9 @@ export default function AdminDashboard() {
               </div>
             )}
             {loading && (
-              <Card glass className="p-10 flex flex-col items-center justify-center gap-4 border-dashed border-2 border-teal-200 bg-teal-50/30">
-                <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
-                <span className="text-teal-700 font-semibold text-sm">
+              <Card glass className="p-10 flex flex-col items-center justify-center gap-4 border-dashed border-2 border-blue-200 bg-blue-50/30">
+                <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                <span className="text-blue-700 font-semibold text-sm">
                   Menyiapkan data dashboard...
                 </span>
               </Card>

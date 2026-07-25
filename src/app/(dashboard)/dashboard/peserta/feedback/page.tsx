@@ -40,8 +40,8 @@ export default function FeedbackPesertaPage() {
         <main className="flex-1 w-full max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
           {/* Header Title */}
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-2.5 bg-teal-100 rounded-xl">
-              <ChatBubbleLeftRightIcon className="w-6 h-6 text-teal-700" />
+            <div className="p-2.5 bg-blue-100 rounded-xl">
+              <ChatBubbleLeftRightIcon className="w-6 h-6 text-blue-700" />
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
@@ -68,8 +68,8 @@ export default function FeedbackPesertaPage() {
 
             <CardBody className="p-6">
               {loading ? (
-                <div className="flex flex-col items-center justify-center py-12 text-teal-600">
-                  <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mb-3" />
+                <div className="flex flex-col items-center justify-center py-12 text-blue-600">
+                  <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3" />
                   <p className="text-sm font-semibold">Mengambil data feedback...</p>
                 </div>
               ) : feedbackList.length === 0 ? (
@@ -81,15 +81,15 @@ export default function FeedbackPesertaPage() {
               ) : (
                 <ul className="space-y-4">
                   {feedbackList.map((fb) => (
-                    <li key={fb._id} className="relative bg-white border border-gray-200 rounded-2xl p-5 hover:border-teal-300 transition-colors duration-200">
+                    <li key={fb._id} className="relative bg-white border border-gray-200 rounded-2xl p-5 hover:border-blue-300 transition-colors duration-200">
                       {/* Check mark badge top right */}
                       <div className="absolute top-4 right-4">
-                        <CheckBadgeIcon className="w-5 h-5 text-teal-400" />
+                        <CheckBadgeIcon className="w-5 h-5 text-blue-400" />
                       </div>
 
                       <div className="pr-8">
                         <div className="flex items-center gap-2 mb-2">
-                          <span className="px-2.5 py-1 bg-teal-50 text-teal-700 text-[10px] font-bold uppercase tracking-wider rounded-lg border border-teal-100">
+                          <span className="px-2.5 py-1 bg-blue-50 text-blue-700 text-[10px] font-bold uppercase tracking-wider rounded-lg border border-blue-100">
                             Pesan Admin
                           </span>
                           <p className="text-xs font-medium text-gray-400">
