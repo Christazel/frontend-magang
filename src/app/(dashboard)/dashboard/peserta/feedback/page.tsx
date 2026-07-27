@@ -7,18 +7,25 @@ import Footer from "@/components/layout/Footer";
 import { ChatBubbleLeftRightIcon, CheckBadgeIcon } from "@heroicons/react/24/outline";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { feedbackService, getErrorMessage } from "@/lib/api";
-import type { Feedback } from "@/types";
+import { Pagination } from "@/components/ui/Pagination";
+import { feedbackService, getErrorMessage, parsePaginationHeaders } from "@/lib/api";
+import type { Feedback, PaginationMeta } from "@/types";
 
 export default function FeedbackPesertaPage() {
   const [feedbackList, setFeedbackList] = useState<Feedback[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Pagination State
+  const [page, setPage] = useState(1);
+  const rowsPerPage = 20;
+  const [meta, setMeta] = useState<Partial<PaginationMeta>>({});
 
   const fetchFeedback = async () => {
     setLoading(true);
     try {
-      const { data } = await feedbackService.getMyFeedback();
-      setFeedbackList(Array.isArray(data) ? data : []);
+      const res = await feedbackService.getMyFeedback({ page, limit: rowsPerPage });
+      setFeedbackList(Array.isArray(res.data) ? res.data : []);
+      setMeta(parsePaginationHeaders(res.headers as Record<string, unknown>));
     } catch (e) {
       console.error(getErrorMessage(e));
       setFeedbackList([]);
@@ -29,7 +36,7 @@ export default function FeedbackPesertaPage() {
 
   useEffect(() => {
     fetchFeedback();
-  }, []);
+  }, [page]);
 
   return (
     <div className="flex min-h-screen bg-gray-50/50">
@@ -111,6 +118,14 @@ export default function FeedbackPesertaPage() {
                 </ul>
               )}
             </CardBody>
+            <Pagination 
+              page={page}
+              totalPages={meta.totalPages || 1}
+              totalCount={meta.totalCount || 0}
+              rowsPerPage={rowsPerPage}
+              onPageChange={setPage}
+              itemName="pesan"
+            />
           </Card>
         </main>
 
