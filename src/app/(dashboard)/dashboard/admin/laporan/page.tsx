@@ -36,12 +36,14 @@ const csvEscape = (v: unknown) => {
 function normalizeFileId(fileId: unknown): string | null {
   if (!fileId) return null;
   if (typeof fileId === "string") return fileId;
-  if (typeof fileId === "object") {
+  if (typeof fileId === "object" && fileId !== null) {
     const obj = fileId as Record<string, unknown>;
     if (typeof obj._id === "string") return obj._id;
     if (typeof obj.$oid === "string") return obj.$oid;
-    if (fileId && typeof (fileId as any).toString === "function") {
-      const s = (fileId as any).toString();
+    
+    const hasToString = fileId as { toString?: () => string };
+    if (typeof hasToString.toString === "function") {
+      const s = hasToString.toString();
       if (s && s !== "[object Object]") return s;
     }
   }

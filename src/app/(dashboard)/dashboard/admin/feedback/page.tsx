@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -35,7 +35,7 @@ export default function FeedbackAdminPage() {
     }
   };
 
-  const fetchAdminFeedback = async () => {
+  const fetchAdminFeedback = useCallback(async () => {
     setHistoryLoading(true);
     try {
       const res = await feedbackService.getAdminAllFeedback({ page, limit: rowsPerPage });
@@ -46,7 +46,7 @@ export default function FeedbackAdminPage() {
     } finally {
       setHistoryLoading(false);
     }
-  };
+  }, [page, rowsPerPage]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,7 +82,7 @@ export default function FeedbackAdminPage() {
 
   useEffect(() => {
     fetchAdminFeedback();
-  }, [page]);
+  }, [fetchAdminFeedback]);
 
   return (
     <div className="flex min-h-screen bg-gray-50/50 overflow-x-hidden">

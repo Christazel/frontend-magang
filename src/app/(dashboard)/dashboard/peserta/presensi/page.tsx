@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ClockIcon, CheckCircleIcon, ArrowLeftIcon, MapPinIcon } from "@heroicons/react/24/outline";
+import useSWR from "swr";
 import { presensiService, getErrorMessage } from "@/lib/api";
 import type { Presensi } from "@/types";
 
@@ -75,7 +76,6 @@ export default function PresensiPage() {
   const router = useRouter();
 
   const [mounted, setMounted] = useState(false);
-  const [presensiHariIni, setPresensiHariIni] = useState<Presensi | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -85,15 +85,18 @@ export default function PresensiPage() {
 
   const [nowWib, setNowWib] = useState<{ time: string; datePretty: string } | null>(null);
 
+  // ✅ SWR untuk data presensi hari ini — otomatis refresh setelah absen
+  const { data: presensiHariIni, mutate: refetchPresensi } = useSWR<Presensi | null>(
+    "/presensi/hari-ini",
+    () => presensiService.getHariIni(),
+  );
+
+  // Clock timer effect — runs once on mount
   useEffect(() => {
     setMounted(true);
     setNowWib(getNowWibParts());
     const t = setInterval(() => setNowWib(getNowWibParts()), 1000);
     return () => clearInterval(t);
-  }, []);
-
-  useEffect(() => {
-    fetchPresensiHariIni();
   }, []);
 
   const canMasuk = useMemo(() => {
@@ -105,15 +108,6 @@ export default function PresensiPage() {
     if (!nowWib) return false;
     return inWindow(nowWib.time, keluarWindow);
   }, [nowWib, keluarWindow]);
-
-  const fetchPresensiHariIni = async () => {
-    try {
-      const data = await presensiService.getHariIni();
-      if (data) setPresensiHariIni(data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
   const getLocation = (): Promise<{ lat: number; lng: number }> => {
     return new Promise((resolve, reject) => {
@@ -165,7 +159,8 @@ export default function PresensiPage() {
       }
 
       setSuccess(`Presensi ${tipe} berhasil dicatat!`);
-      fetchPresensiHariIni();
+      // ✅ SWR mutate: update cache secara optimistis tanpa full reload
+      refetchPresensi();
     } catch (err: unknown) {
       setError(getErrorMessage(err));
     } finally {

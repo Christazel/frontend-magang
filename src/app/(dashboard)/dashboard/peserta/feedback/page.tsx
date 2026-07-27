@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -20,7 +20,7 @@ export default function FeedbackPesertaPage() {
   const rowsPerPage = 20;
   const [meta, setMeta] = useState<Partial<PaginationMeta>>({});
 
-  const fetchFeedback = async () => {
+  const fetchFeedback = useCallback(async () => {
     setLoading(true);
     try {
       const res = await feedbackService.getMyFeedback({ page, limit: rowsPerPage });
@@ -32,11 +32,11 @@ export default function FeedbackPesertaPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, rowsPerPage]);
 
   useEffect(() => {
     fetchFeedback();
-  }, [page]);
+  }, [fetchFeedback]);
 
   return (
     <div className="flex min-h-screen bg-gray-50/50">
