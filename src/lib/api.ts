@@ -121,7 +121,10 @@ export const laporanService = {
 // ====================
 
 export const feedbackService = {
-  getMyFeedback: () => apiClient.get("/feedback"),
+  getMyFeedback: (params?: { page: number; limit: number; search?: string }) => 
+    apiClient.get("/feedback", { params }),
+  getAdminAllFeedback: (params?: { page: number; limit: number; search?: string }) => 
+    apiClient.get("/feedback/admin", { params }),
   send: (payload: { userId: string; feedback: string }) =>
     apiClient.post("/feedback", payload),
 };

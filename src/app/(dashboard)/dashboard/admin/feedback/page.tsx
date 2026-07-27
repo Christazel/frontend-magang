@@ -6,16 +6,24 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { ChatBubbleLeftEllipsisIcon, PaperAirplaneIcon } from "@heroicons/react/24/outline";
+import { ChatBubbleLeftEllipsisIcon, PaperAirplaneIcon, CheckBadgeIcon } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
-import { userService, feedbackService, getErrorMessage } from "@/lib/api";
-import type { User } from "@/types";
+import { Pagination } from "@/components/ui/Pagination";
+import { userService, feedbackService, getErrorMessage, parsePaginationHeaders } from "@/lib/api";
+import type { User, Feedback, PaginationMeta } from "@/types";
 
 export default function FeedbackAdminPage() {
   const [pesertaList, setPesertaList] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState("");
   const [feedback, setFeedback] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Pagination for Riwayat Feedback
+  const [feedbackList, setFeedbackList] = useState<Feedback[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const rowsPerPage = 10;
+  const [meta, setMeta] = useState<Partial<PaginationMeta>>({});
 
   const fetchPeserta = async () => {
     try {
@@ -24,6 +32,19 @@ export default function FeedbackAdminPage() {
     } catch (err) {
       console.error("Gagal mengambil peserta:", err);
       toast.error(getErrorMessage(err));
+    }
+  };
+
+  const fetchAdminFeedback = async () => {
+    setHistoryLoading(true);
+    try {
+      const res = await feedbackService.getAdminAllFeedback({ page, limit: rowsPerPage });
+      setFeedbackList(Array.isArray(res.data) ? res.data : []);
+      setMeta(parsePaginationHeaders(res.headers as Record<string, unknown>));
+    } catch (err) {
+      console.error("Gagal mengambil riwayat feedback:", err);
+    } finally {
+      setHistoryLoading(false);
     }
   };
 
@@ -46,6 +67,8 @@ export default function FeedbackAdminPage() {
       toast.success("Feedback berhasil dikirim ke peserta!");
       setSelectedUser("");
       setFeedback("");
+      // Refresh history immediately after sending
+      fetchAdminFeedback();
     } catch (error: unknown) {
       toast.error(getErrorMessage(error));
     } finally {
@@ -56,6 +79,10 @@ export default function FeedbackAdminPage() {
   useEffect(() => {
     fetchPeserta();
   }, []);
+
+  useEffect(() => {
+    fetchAdminFeedback();
+  }, [page]);
 
   return (
     <div className="flex min-h-screen bg-gray-50/50 overflow-x-hidden">
@@ -134,6 +161,55 @@ export default function FeedbackAdminPage() {
                 </div>
               </form>
             </CardBody>
+          </Card>
+
+          {/* Riwayat Feedback Section */}
+          <h2 className="text-xl font-bold text-gray-900 mt-12 mb-6">Riwayat Keseluruhan Feedback</h2>
+          <Card className="shadow-sm border-gray-100">
+            <CardBody className="p-6">
+              {historyLoading ? (
+                <div className="flex justify-center py-12">
+                  <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : feedbackList.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-gray-500 font-medium">Belum ada feedback yang dikirimkan.</p>
+                </div>
+              ) : (
+                <ul className="space-y-4">
+                  {feedbackList.map((fb) => (
+                    <li key={fb._id} className="bg-white border border-gray-200 rounded-2xl p-5 hover:border-blue-300 transition-colors duration-200">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex flex-col">
+                          <span className="text-sm font-bold text-gray-800">Kepada: {fb.user?.name || "User tidak ditemukan"}</span>
+                          <span className="text-xs font-medium text-gray-400">
+                            {new Date(fb.createdAt).toLocaleString("id-ID", {
+                              dateStyle: "long",
+                              timeStyle: "short",
+                            })}
+                          </span>
+                        </div>
+                        <CheckBadgeIcon className="w-5 h-5 text-blue-400" />
+                      </div>
+                      
+                      <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                        <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                          {fb.feedback}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardBody>
+            <Pagination 
+              page={page}
+              totalPages={meta.totalPages || 1}
+              totalCount={meta.totalCount || 0}
+              rowsPerPage={rowsPerPage}
+              onPageChange={setPage}
+              itemName="pesan"
+            />
           </Card>
           
         </main>
