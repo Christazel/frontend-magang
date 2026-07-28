@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ClockIcon, CheckCircleIcon, ArrowLeftIcon, MapPinIcon } from "@heroicons/react/24/outline";
+import { ClockIcon, CheckCircleIcon, ArrowLeftIcon, MapPinIcon, CalendarDaysIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import useSWR from "swr";
-import { presensiService, getErrorMessage } from "@/lib/api";
-import type { Presensi } from "@/types";
+import { presensiService, izinService, getErrorMessage } from "@/lib/api";
+import type { Presensi, Izin, IzinStatus } from "@/types";
+import toast from "react-hot-toast";
 
 type WindowTime = { start: string; end: string };
 
@@ -84,6 +85,17 @@ export default function PresensiPage() {
   const keluarWindow = useMemo(() => getWindowFromEnv("KELUAR", DEFAULT_KELUAR), []);
 
   const [nowWib, setNowWib] = useState<{ time: string; datePretty: string } | null>(null);
+
+  // ─── State Izin Modal ───
+  const [showIzinModal, setShowIzinModal] = useState(false);
+  const [izinForm, setIzinForm] = useState({ tanggal: "", jenis: "sakit", keterangan: "" });
+  const [izinLoading, setIzinLoading] = useState(false);
+
+  // ─── Riwayat Izin ───
+  const { data: riwayatIzin, mutate: refetchIzin } = useSWR<Izin[]>(
+    "/izin",
+    () => izinService.getMyIzin().then((r) => r.data),
+  );
 
   // ✅ SWR untuk data presensi hari ini — otomatis refresh setelah absen
   const { data: presensiHariIni, mutate: refetchPresensi } = useSWR<Presensi | null>(
@@ -165,6 +177,29 @@ export default function PresensiPage() {
       setError(getErrorMessage(err));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAjukanIzin = async () => {
+    if (!izinForm.tanggal || !izinForm.jenis) {
+      toast.error("Tanggal dan jenis wajib diisi!");
+      return;
+    }
+    setIzinLoading(true);
+    try {
+      await izinService.ajukan({
+        tanggal: izinForm.tanggal,
+        jenis: izinForm.jenis,
+        keterangan: izinForm.keterangan,
+      });
+      toast.success("Pengajuan izin berhasil dikirim! Menunggu persetujuan admin.");
+      setShowIzinModal(false);
+      setIzinForm({ tanggal: "", jenis: "sakit", keterangan: "" });
+      refetchIzin();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setIzinLoading(false);
     }
   };
 
@@ -360,12 +395,129 @@ export default function PresensiPage() {
                 <ArrowLeftIcon className="w-4 h-4" />
                 Kembali ke Dashboard
               </button>
+
+              {/* ─── Tombol Ajukan Izin ─── */}
+              <button
+                id="btn-ajukan-izin"
+                type="button"
+                onClick={() => setShowIzinModal(true)}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-colors duration-200"
+              >
+                <CalendarDaysIcon className="w-4 h-4" />
+                Ajukan Izin / Sakit Hari Ini
+              </button>
             </div>
 
           </div>
         </div>
 
+        {/* ─── Riwayat Pengajuan Izin ─── */}
+        {Array.isArray(riwayatIzin) && riwayatIzin.length > 0 && (
+          <div className="mt-5 bg-white rounded-2xl shadow-soft border border-gray-100 overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100">
+              <h2 className="text-sm font-bold text-gray-900">Riwayat Pengajuan Izin</h2>
+            </div>
+            <div className="divide-y divide-gray-50">
+              {riwayatIzin.map((item) => {
+                const statusMap: Record<IzinStatus, { label: string; cls: string }> = {
+                  pending:   { label: "Menunggu",  cls: "bg-amber-50 text-amber-700 border-amber-200" },
+                  disetujui: { label: "Disetujui", cls: "bg-green-50 text-green-700 border-green-200" },
+                  ditolak:   { label: "Ditolak",   cls: "bg-rose-50 text-rose-700 border-rose-200" },
+                };
+                const { label, cls } = statusMap[item.status] ?? statusMap.pending;
+                return (
+                  <div key={item._id} className="px-5 py-3.5 flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-800 capitalize">
+                        {item.jenis === "sakit" ? "🤒 Sakit" : "📝 Izin"} — {item.tanggal}
+                      </p>
+                      {item.keterangan && (
+                        <p className="text-xs text-gray-400 truncate mt-0.5">{item.keterangan}</p>
+                      )}
+                      {item.catatanAdmin && (
+                        <p className="text-xs text-gray-500 mt-0.5 italic">Admin: {item.catatanAdmin}</p>
+                      )}
+                    </div>
+                    <span className={`flex-shrink-0 text-xs font-semibold px-2.5 py-1 rounded-lg border ${cls}`}>
+                      {label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
       </div>
+
+      {/* ─── Modal Ajukan Izin ─── */}
+      {showIzinModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-gray-900">Ajukan Izin / Sakit</h2>
+              <button
+                onClick={() => setShowIzinModal(false)}
+                className="p-1.5 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <XMarkIcon className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-sm font-semibold text-gray-700 block mb-1.5">Tanggal</label>
+                <input
+                  type="date"
+                  value={izinForm.tanggal}
+                  onChange={(e) => setIzinForm((p) => ({ ...p, tanggal: e.target.value }))}
+                  className="w-full text-sm p-2.5 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-gray-700 block mb-1.5">Jenis Ketidakhadiran</label>
+                <select
+                  value={izinForm.jenis}
+                  onChange={(e) => setIzinForm((p) => ({ ...p, jenis: e.target.value }))}
+                  className="w-full text-sm p-2.5 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
+                >
+                  <option value="sakit">🤒 Sakit</option>
+                  <option value="izin">📝 Izin</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-gray-700 block mb-1.5">
+                  Keterangan <span className="font-normal text-gray-400">(opsional)</span>
+                </label>
+                <textarea
+                  rows={3}
+                  value={izinForm.keterangan}
+                  onChange={(e) => setIzinForm((p) => ({ ...p, keterangan: e.target.value }))}
+                  placeholder="Contoh: Demam tinggi, sudah ke dokter..."
+                  className="w-full text-sm p-3 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowIzinModal(false)}
+                disabled={izinLoading}
+                className="flex-1 py-2.5 text-sm font-semibold rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleAjukanIzin}
+                disabled={izinLoading}
+                className="flex-1 py-2.5 text-sm font-semibold rounded-xl text-white bg-amber-500 hover:bg-amber-600 transition-colors disabled:opacity-60"
+              >
+                {izinLoading ? "Mengirim..." : "Kirim Pengajuan"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

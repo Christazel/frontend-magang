@@ -122,3 +122,30 @@ export interface Feedback {
   createdAt: string;
   user?: Pick<User, "name" | "email">;
 }
+
+// ---- Izin / Sakit ----
+
+export type IzinJenis = "izin" | "sakit";
+export type IzinStatus = "pending" | "disetujui" | "ditolak";
+
+export interface Izin {
+  _id: string;
+  tanggal: string;
+  jenis: IzinJenis;
+  keterangan?: string;
+  fileBukti?: string | null;
+  status: IzinStatus;
+  catatanAdmin?: string;
+  createdAt: string;
+  updatedAt: string;
+  user?: Pick<User, "name" | "email"> & { _id?: string };
+}
+
+// ---- Notifikasi Revisi Laporan ----
+
+export interface NotifikasiRevisi {
+  _id: string;
+  judul: string;
+  adminCatatan?: string;
+  createdAt: string;
+}

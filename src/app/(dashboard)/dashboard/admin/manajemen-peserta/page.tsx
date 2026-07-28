@@ -6,9 +6,10 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
-import { UsersIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
+import { UsersIcon, ArrowPathIcon, KeyIcon } from "@heroicons/react/24/outline";
 import { userService, getErrorMessage } from "@/lib/api";
 import type { Peserta } from "@/types";
+import toast from "react-hot-toast";
 
 // Konfigurasi perhitungan keaktifan
 const TOTAL_HARI = 90; // total hari magang (silakan sesuaikan)
@@ -33,6 +34,7 @@ export default function ManajemenPesertaPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortBy>("name");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
+  const [resetLoadingId, setResetLoadingId] = useState<string | null>(null);
 
   // Debounce input pencarian (ringan di device low-end)
   const debounceRef = useRef<number | null>(null);
@@ -63,6 +65,19 @@ export default function ManajemenPesertaPage() {
   useEffect(() => {
     fetchPeserta();
   }, []);
+
+  const handleResetPassword = async (p: Peserta) => {
+    if (!window.confirm(`Reset password ${p.name} menjadi default (Magang123)?`)) return;
+    setResetLoadingId(p._id);
+    try {
+      const { data } = await userService.resetPasswordPeserta(p._id) as { data: { msg: string } };
+      toast.success(data.msg || `Password ${p.name} berhasil direset!`);
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setResetLoadingId(null);
+    }
+  };
 
   // 🔍 Filter & Sort (memoized)
   const filteredPeserta = useMemo(() => {
@@ -199,7 +214,7 @@ export default function ManajemenPesertaPage() {
                             <p className="font-bold text-gray-900 truncate">{p.name}</p>
                             <p className="text-xs text-gray-500 truncate mb-3">{p.email}</p>
                             
-                            <div className="flex flex-wrap gap-2">
+                            <div className="flex flex-wrap gap-2 mb-3">
                               <span className="px-2.5 py-1 text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100 rounded-lg">
                                 Hadir: {p.hadir}
                               </span>
@@ -210,6 +225,14 @@ export default function ManajemenPesertaPage() {
                                 Aktif: {hitungKeaktifan(p.hadir, p.tugas)}%
                               </span>
                             </div>
+                            <button
+                              onClick={() => handleResetPassword(p)}
+                              disabled={resetLoadingId === p._id}
+                              className="w-full flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 text-gray-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors disabled:opacity-50"
+                            >
+                              <KeyIcon className="w-3.5 h-3.5" />
+                              {resetLoadingId === p._id ? "Mereset..." : "Reset Password"}
+                            </button>
                           </div>
                         ))
                       )}
@@ -225,6 +248,7 @@ export default function ManajemenPesertaPage() {
                             <th scope="col" className="px-6 py-4 text-center font-bold">Kehadiran</th>
                             <th scope="col" className="px-6 py-4 text-center font-bold">Tugas</th>
                             <th scope="col" className="px-6 py-4 text-center font-bold">Keaktifan</th>
+                            <th scope="col" className="px-6 py-4 text-center font-bold">Aksi</th>
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-100">
@@ -261,6 +285,17 @@ export default function ManajemenPesertaPage() {
                                   <span className="inline-flex items-center justify-center min-w-[3.5rem] px-2 py-1 text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100 rounded-lg">
                                     {hitungKeaktifan(p.hadir, p.tugas)}%
                                   </span>
+                                </td>
+                                <td className="px-6 py-4 text-center">
+                                  <button
+                                    onClick={() => handleResetPassword(p)}
+                                    disabled={resetLoadingId === p._id}
+                                    title="Reset password ke default"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border border-gray-200 text-gray-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors disabled:opacity-50"
+                                  >
+                                    <KeyIcon className="w-3.5 h-3.5" />
+                                    {resetLoadingId === p._id ? "..." : "Reset PW"}
+                                  </button>
                                 </td>
                               </tr>
                             ))

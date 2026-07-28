@@ -9,6 +9,7 @@ import {
   FileText,
   MessageSquare,
   CheckSquare,
+  CalendarDays,
 } from "lucide-react";
 import type { MenuItem } from "@/types";
 
@@ -25,6 +26,11 @@ export const ADMIN_MENU_ITEMS: MenuItem[] = [
     href: "/dashboard/admin/rekap-presensi",
     icon: ClipboardList,
     label: "Rekap Presensi",
+  },
+  {
+    href: "/dashboard/admin/izin",
+    icon: CalendarDays,
+    label: "Pengajuan Izin",
   },
   {
     href: "/dashboard/admin/manajemen-peserta",
