@@ -297,6 +297,13 @@ export default function LoginPage() {
               </div>
             </div>
 
+            {/* Lupa Password Hint */}
+            <div className="flex justify-end">
+              <span className="text-xs text-gray-500 hover:text-gray-700 transition-colors">
+                Lupa password? Hubungi Admin Instansi Anda
+              </span>
+            </div>
+
             {/* Submit Button */}
             <button
               type="submit"
