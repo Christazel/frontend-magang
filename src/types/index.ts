@@ -18,6 +18,7 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  status?: "pending" | "approved" | "rejected";
 }
 
 export interface AuthContextType {
@@ -112,6 +113,8 @@ export interface Peserta {
   email: string;
   hadir: number;
   tugas: number;
+  status?: "pending" | "approved" | "rejected";
+  createdAt?: string;
 }
 
 // ---- Feedback ----
