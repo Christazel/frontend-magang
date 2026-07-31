@@ -6,7 +6,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
-import { UsersIcon, ArrowPathIcon, KeyIcon } from "@heroicons/react/24/outline";
+import { UsersIcon, ArrowPathIcon, KeyIcon, CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
 import { userService, getErrorMessage } from "@/lib/api";
 import type { Peserta } from "@/types";
 import toast from "react-hot-toast";
@@ -35,6 +35,7 @@ export default function ManajemenPesertaPage() {
   const [sortBy, setSortBy] = useState<SortBy>("name");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
   const [resetLoadingId, setResetLoadingId] = useState<string | null>(null);
+  const [statusLoadingId, setStatusLoadingId] = useState<string | null>(null);
 
   // Debounce input pencarian (ringan di device low-end)
   const debounceRef = useRef<number | null>(null);
@@ -76,6 +77,25 @@ export default function ManajemenPesertaPage() {
       toast.error(getErrorMessage(err));
     } finally {
       setResetLoadingId(null);
+    }
+  };
+
+  const handleUpdateStatus = async (p: Peserta, newStatus: "approved" | "rejected") => {
+    const actionLabel = newStatus === "approved" ? "menyetujui" : "menolak";
+    if (!window.confirm(`Apakah Anda yakin ingin ${actionLabel} pendaftaran ${p.name}?`)) return;
+    setStatusLoadingId(p._id);
+    try {
+      await userService.updateStatusPeserta(p._id, newStatus);
+      toast.success(
+        newStatus === "approved"
+          ? `Akun ${p.name} berhasil disetujui! ✅`
+          : `Pendaftaran ${p.name} ditolak. ❌`
+      );
+      fetchPeserta();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setStatusLoadingId(null);
     }
   };
 
@@ -210,11 +230,26 @@ export default function ManajemenPesertaPage() {
                         </div>
                       ) : (
                         filteredPeserta.map((p) => (
-                          <div key={p._id} className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-                            <p className="font-bold text-gray-900 truncate">{p.name}</p>
-                            <p className="text-xs text-gray-500 truncate mb-3">{p.email}</p>
+                          <div key={p._id} className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm space-y-3">
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <p className="font-bold text-gray-900 truncate">{p.name}</p>
+                                <p className="text-xs text-gray-500 truncate">{p.email}</p>
+                              </div>
+                              <span
+                                className={`px-2.5 py-1 text-xs font-semibold rounded-lg border flex-shrink-0 ${
+                                  p.status === "pending"
+                                    ? "bg-amber-50 text-amber-700 border-amber-200"
+                                    : p.status === "rejected"
+                                    ? "bg-rose-50 text-rose-700 border-rose-200"
+                                    : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                }`}
+                              >
+                                {p.status === "pending" ? "Menunggu" : p.status === "rejected" ? "Ditolak" : "Aktif"}
+                              </span>
+                            </div>
                             
-                            <div className="flex flex-wrap gap-2 mb-3">
+                            <div className="flex flex-wrap gap-2">
                               <span className="px-2.5 py-1 text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100 rounded-lg">
                                 Hadir: {p.hadir}
                               </span>
@@ -225,14 +260,37 @@ export default function ManajemenPesertaPage() {
                                 Aktif: {hitungKeaktifan(p.hadir, p.tugas)}%
                               </span>
                             </div>
-                            <button
-                              onClick={() => handleResetPassword(p)}
-                              disabled={resetLoadingId === p._id}
-                              className="w-full flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 text-gray-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors disabled:opacity-50"
-                            >
-                              <KeyIcon className="w-3.5 h-3.5" />
-                              {resetLoadingId === p._id ? "Mereset..." : "Reset Password"}
-                            </button>
+
+                            <div className="flex items-center gap-2 pt-1 border-t border-gray-100">
+                              {p.status === "pending" && (
+                                <>
+                                  <button
+                                    onClick={() => handleUpdateStatus(p, "approved")}
+                                    disabled={statusLoadingId === p._id}
+                                    className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                                  >
+                                    <CheckCircleIcon className="w-3.5 h-3.5" />
+                                    Setujui
+                                  </button>
+                                  <button
+                                    onClick={() => handleUpdateStatus(p, "rejected")}
+                                    disabled={statusLoadingId === p._id}
+                                    className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-semibold rounded-lg bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition-colors disabled:opacity-50"
+                                  >
+                                    <XCircleIcon className="w-3.5 h-3.5" />
+                                    Tolak
+                                  </button>
+                                </>
+                              )}
+                              <button
+                                onClick={() => handleResetPassword(p)}
+                                disabled={resetLoadingId === p._id}
+                                className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 text-gray-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors disabled:opacity-50"
+                              >
+                                <KeyIcon className="w-3.5 h-3.5" />
+                                {resetLoadingId === p._id ? "..." : "Reset PW"}
+                              </button>
+                            </div>
                           </div>
                         ))
                       )}
@@ -245,6 +303,7 @@ export default function ManajemenPesertaPage() {
                           <tr>
                             <th scope="col" className="px-6 py-4 font-bold">Nama</th>
                             <th scope="col" className="px-6 py-4 font-bold">Email</th>
+                            <th scope="col" className="px-6 py-4 text-center font-bold">Status Akun</th>
                             <th scope="col" className="px-6 py-4 text-center font-bold">Kehadiran</th>
                             <th scope="col" className="px-6 py-4 text-center font-bold">Tugas</th>
                             <th scope="col" className="px-6 py-4 text-center font-bold">Keaktifan</th>
@@ -272,6 +331,28 @@ export default function ManajemenPesertaPage() {
                                   </span>
                                 </td>
                                 <td className="px-6 py-4 text-center">
+                                  <span
+                                    className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg border ${
+                                      p.status === "pending"
+                                        ? "bg-amber-50 text-amber-700 border-amber-200"
+                                        : p.status === "rejected"
+                                        ? "bg-rose-50 text-rose-700 border-rose-200"
+                                        : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                    }`}
+                                  >
+                                    {p.status === "pending" ? (
+                                      <>
+                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                        Menunggu
+                                      </>
+                                    ) : p.status === "rejected" ? (
+                                      "Ditolak"
+                                    ) : (
+                                      "Aktif"
+                                    )}
+                                  </span>
+                                </td>
+                                <td className="px-6 py-4 text-center">
                                   <span className="inline-flex items-center justify-center min-w-[3rem] px-2 py-1 text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100 rounded-lg">
                                     {p.hadir}
                                   </span>
@@ -287,15 +368,39 @@ export default function ManajemenPesertaPage() {
                                   </span>
                                 </td>
                                 <td className="px-6 py-4 text-center">
-                                  <button
-                                    onClick={() => handleResetPassword(p)}
-                                    disabled={resetLoadingId === p._id}
-                                    title="Reset password ke default"
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border border-gray-200 text-gray-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors disabled:opacity-50"
-                                  >
-                                    <KeyIcon className="w-3.5 h-3.5" />
-                                    {resetLoadingId === p._id ? "..." : "Reset PW"}
-                                  </button>
+                                  <div className="flex items-center justify-center gap-1.5">
+                                    {p.status === "pending" && (
+                                      <>
+                                        <button
+                                          onClick={() => handleUpdateStatus(p, "approved")}
+                                          disabled={statusLoadingId === p._id}
+                                          title="Setujui pendaftaran akun"
+                                          className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                                        >
+                                          <CheckCircleIcon className="w-3.5 h-3.5" />
+                                          Setujui
+                                        </button>
+                                        <button
+                                          onClick={() => handleUpdateStatus(p, "rejected")}
+                                          disabled={statusLoadingId === p._id}
+                                          title="Tolak pendaftaran akun"
+                                          className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-xl border border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 transition-colors disabled:opacity-50"
+                                        >
+                                          <XCircleIcon className="w-3.5 h-3.5" />
+                                          Tolak
+                                        </button>
+                                      </>
+                                    )}
+                                    <button
+                                      onClick={() => handleResetPassword(p)}
+                                      disabled={resetLoadingId === p._id}
+                                      title="Reset password ke default"
+                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border border-gray-200 text-gray-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors disabled:opacity-50"
+                                    >
+                                      <KeyIcon className="w-3.5 h-3.5" />
+                                      {resetLoadingId === p._id ? "..." : "Reset PW"}
+                                    </button>
+                                  </div>
                                 </td>
                               </tr>
                             ))

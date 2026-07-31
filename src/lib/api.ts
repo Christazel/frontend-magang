@@ -91,6 +91,10 @@ export const presensiService = {
     apiClient.post("/presensi/masuk", payload),
   keluar: (payload: { lokasiKeluar?: string }) =>
     apiClient.post("/presensi/keluar", payload),
+  inputManual: (payload: { userId: string; tanggal: string; jamMasuk?: string; jamKeluar?: string; lokasiMasuk?: string; lokasiKeluar?: string }) =>
+    apiClient.post("/presensi/admin/manual", payload),
+  deletePresensi: (id: string) =>
+    apiClient.delete(`/presensi/admin/${id}`),
 };
 
 // ====================
@@ -142,6 +146,8 @@ export const userService = {
   getAdminPeserta: () => apiClient.get("/users/admin/peserta"),
   resetPasswordPeserta: (id: string) =>
     apiClient.put(`/users/admin/peserta/${id}/reset-password`),
+  updateStatusPeserta: (id: string, status: "approved" | "rejected" | "pending") =>
+    apiClient.put(`/users/admin/peserta/${id}/status`, { status }),
 };
 
 // ====================

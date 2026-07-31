@@ -52,9 +52,9 @@ export default function FeedbackPesertaPage() {
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
-                Feedback & Evaluasi
+                Pesan &amp; Evaluasi Kinerja (General)
               </h1>
-              <p className="text-sm text-gray-500">Pesan dan masukan dari pembimbing / admin</p>
+              <p className="text-sm text-gray-500">Pesan dan masukan evaluasi umum dari pembimbing / admin</p>
             </div>
           </div>
 

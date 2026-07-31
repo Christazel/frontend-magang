@@ -45,7 +45,7 @@ export const ADMIN_MENU_ITEMS: MenuItem[] = [
   {
     href: "/dashboard/admin/feedback",
     icon: MessageSquare,
-    label: "Feedback & Evaluasi",
+    label: "Pesan & Evaluasi Kinerja",
   },
 ];
 
@@ -71,7 +71,7 @@ export const PESERTA_MENU_ITEMS: MenuItem[] = [
   {
     href: "/dashboard/peserta/feedback",
     icon: MessageSquare,
-    label: "Feedback",
+    label: "Pesan & Evaluasi Kinerja",
   },
 ];
 
