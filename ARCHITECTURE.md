@@ -1,106 +1,125 @@
-## 📁 Project Structure Documentation
+# 📁 SIPMA Melawi — Frontend Documentation
 
-### Folder Organization
+**Sistem Informasi Peserta Magang — Dinas Pendidikan Kabupaten Melawi**  
+**Tech Stack:** Next.js 15 · TypeScript · Tailwind CSS v3 · Axios · SWR
+
+---
+
+## 🗂️ Project Structure
 
 ```
 src/
-├── app/                    # Next.js App Router
-│   ├── layout.tsx         # Root layout component
-│   ├── page.tsx           # Home page
-│   ├── providers.tsx      # Global providers (Auth, Toast)
-│   ├── (auth)/            # Auth route group
-│   │   ├── login/         # Login page
-│   │   └── register/      # Register page
-│   └── (dashboard)/       # Dashboard route group
-│       └── dashboard/     # Dashboard pages
+├── app/                        # Next.js App Router
+│   ├── layout.tsx              # Root layout (metadata, fonts)
+│   ├── page.tsx                # Landing page (redirect by role)
+│   ├── providers.tsx           # Global providers: SWRConfig, AuthProvider, Toaster
+│   ├── error.tsx               # Global error boundary page
+│   ├── (auth)/
+│   │   ├── login/page.tsx      # Login page
+│   │   └── register/page.tsx   # Register peserta page
+│   └── (dashboard)/
+│       └── dashboard/
+│           ├── page.tsx                      # Role-based redirect
+│           ├── admin/
+│           │   ├── page.tsx                  # Admin dashboard overview
+│           │   ├── feedback/page.tsx         # Kirim & lihat riwayat feedback
+│           │   ├── laporan/page.tsx          # Review & evaluasi laporan
+│           │   ├── manajemen-peserta/page.tsx # CRUD peserta
+│           │   └── rekap-presensi/page.tsx   # Rekap kehadiran semua peserta
+│           └── peserta/
+│               ├── page.tsx                  # Peserta dashboard overview
+│               ├── feedback/page.tsx         # Riwayat feedback dari admin
+│               ├── laporan/page.tsx          # Upload & kelola laporan
+│               └── presensi/page.tsx         # Presensi masuk/keluar (GPS)
 │
-├── components/            # Reusable React components
-│   └── layout/           # Layout components
-│       ├── Navbar.tsx    # Top navigation bar
-│       ├── Sidebar.tsx   # Sidebar navigation
-│       └── Footer.tsx    # Footer component
+├── components/
+│   ├── layout/
+│   │   ├── Navbar.tsx          # Top navigation bar
+│   │   ├── Sidebar.tsx         # Role-based sidebar navigation
+│   │   └── Footer.tsx          # Footer component
+│   └── ui/
+│       ├── Button.tsx          # Reusable button with variants
+│       ├── Card.tsx            # Card container components
+│       ├── Input.tsx           # Form input component
+│       ├── Pagination.tsx      # Server-side pagination component
+│       └── ErrorBoundary.tsx   # Client-side error boundary
 │
-├── context/              # React Context for state management
-│   └── AuthContext.tsx   # Authentication context & provider
+├── context/
+│   └── AuthContext.tsx         # JWT auth state: login, logout, user info
 │
-├── hooks/                # Custom React hooks
-│   └── useAuth.ts        # Hook to use auth context
+├── hooks/
+│   └── useAuth.ts              # Hook wrapper for AuthContext
 │
-├── lib/                  # Utility functions & libraries
-│   ├── api.ts           # API service functions
-│   └── utils.ts         # Helper utility functions
+├── lib/
+│   ├── api.ts                  # All API services (apiClient, authService, etc.)
+│   └── utils.ts                # Helper utilities
 │
-├── constants/            # Application constants
-│   └── menu.ts          # Menu configuration & items
+├── constants/
+│   └── menu.ts                 # Sidebar menu config per role
 │
-├── types/               # TypeScript type definitions
-│   └── index.ts         # Global types & interfaces
+├── types/
+│   └── index.ts                # Global TypeScript interfaces & enums
 │
-└── styles/              # Global stylesheets
-    └── globals.css      # Global CSS styles
+└── styles/
+    └── globals.css             # Tailwind base + custom animations + utilities
 ```
 
-### Key Files & Their Purposes
+---
 
-#### Context
-- **AuthContext.tsx**: Manages user authentication state, login/logout logic, and token handling
+## 🔌 API Layer (`src/lib/api.ts`)
 
-#### API Services
-- **api.ts**: Centralized API calls with proper error handling
-- **Includes**: loginUser(), apiCall() for making authenticated requests
+Central Axios instance with automatic token injection and 401 redirect.
 
-#### Type Definitions
-- **types/index.ts**: Global TypeScript interfaces and enums (User, AuthContextType, MenuItem, etc.)
+| Service | Methods |
+|---|---|
+| `authService` | `login`, `register` |
+| `userService` | `getProfile`, `getPesertaList` |
+| `presensiService` | `masuk`, `keluar`, `getHariIni`, `getAdminAll` |
+| `laporanService` | `submit`, `getMyLaporan`, `getAdminAll`, `review` |
+| `feedbackService` | `send`, `getMyFeedback`, `getAdminAllFeedback` |
 
-#### Constants
-- **constants/menu.ts**: Menu items configuration for admin and peserta roles
+---
 
-#### Utilities
-- **lib/utils.ts**: Helper functions for validation, formatting, string manipulation, etc.
+## 🔄 Data Fetching Strategy
 
-#### Components
-- **Sidebar.tsx**: Dynamic sidebar with role-based menu items
-- **Navbar.tsx**: Fixed top navbar
-- **Footer.tsx**: Footer component
+| Pattern | Used For |
+|---|---|
+| **SWR** (`useSWR`) | Data read-only yang perlu auto-revalidation (presensi hari ini) |
+| **SWR + mutate** | Data yang perlu di-refresh setelah user action |
+| **Axios + useCallback** | Paginated data dengan filter/search (rekap presensi, laporan) |
 
-### How to Add New Features
+Global SWR fetcher dikonfigurasi di `providers.tsx` menggunakan `apiClient`.
 
-1. **New API Endpoint**: Add function to `src/lib/api.ts`
-2. **New Type**: Add interface to `src/types/index.ts`
-3. **New Component**: Create in `src/components/` with proper folder structure
-4. **New Page**: Create in `src/app/` following Next.js routing conventions
-5. **New Utility**: Add function to `src/lib/utils.ts`
+---
 
-### Best Practices
+## 🚀 Getting Started
 
-- ✅ Always use TypeScript types from `@/types`
-- ✅ Import utilities from `@/lib`
-- ✅ Use constants from `@/constants` instead of hardcoding values
-- ✅ Handle errors properly with try-catch blocks
-- ✅ Use toast notifications for user feedback
-- ✅ Add JSDoc comments for functions
-- ✅ Keep components focused and reusable
-- ✅ Use path aliases (@/) for cleaner imports
+```bash
+# Install dependencies
+npm install
+
+# Development server (with Turbopack)
+npm run dev
+
+# Production build
+npm run build
+
+# Linting (must pass with 0 errors)
+npm run lint
+```
 
 ### Environment Variables
 
-Create `.env.local` file in root directory with:
+Buat file `.env.local` di root project:
 ```
-NEXT_PUBLIC_API_URL=your_api_url
+NEXT_PUBLIC_API_URL=http://localhost:5000
 ```
 
-### Running the Project
+---
 
-```bash
-# Development
-npm run dev
+## ✅ Code Quality Standards
 
-# Build
-npm run build
-
-# Production
-npm start
-
-# Linting
-npm run lint
-```
+- **ESLint:** `npm run lint` harus menghasilkan `0 warnings or errors`
+- **TypeScript:** Strict mode, tidak ada `any` type casting
+- **React Hooks:** Semua `useEffect` harus memiliki dependency array yang benar
+- **Build:** `npm run build` harus sukses tanpa error TypeScript

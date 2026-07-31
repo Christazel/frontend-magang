@@ -9,6 +9,7 @@ import {
   FileText,
   MessageSquare,
   CheckSquare,
+  CalendarDays,
 } from "lucide-react";
 import type { MenuItem } from "@/types";
 
@@ -27,6 +28,11 @@ export const ADMIN_MENU_ITEMS: MenuItem[] = [
     label: "Rekap Presensi",
   },
   {
+    href: "/dashboard/admin/izin",
+    icon: CalendarDays,
+    label: "Pengajuan Izin",
+  },
+  {
     href: "/dashboard/admin/manajemen-peserta",
     icon: Users,
     label: "Manajemen Peserta",
@@ -39,7 +45,7 @@ export const ADMIN_MENU_ITEMS: MenuItem[] = [
   {
     href: "/dashboard/admin/feedback",
     icon: MessageSquare,
-    label: "Feedback & Evaluasi",
+    label: "Pesan & Evaluasi Kinerja",
   },
 ];
 
@@ -65,7 +71,7 @@ export const PESERTA_MENU_ITEMS: MenuItem[] = [
   {
     href: "/dashboard/peserta/feedback",
     icon: MessageSquare,
-    label: "Feedback",
+    label: "Pesan & Evaluasi Kinerja",
   },
 ];
 

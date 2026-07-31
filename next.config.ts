@@ -6,8 +6,6 @@ const ORIGIN =
   (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000").replace(/\/$/, "");
 
 const nextConfig: NextConfig = {
-  // Biarkan build Vercel tidak gagal karena lint
-  eslint: { ignoreDuringBuilds: true },
 
   // Proxy semua request /api/* ke backend Railway
   async rewrites() {

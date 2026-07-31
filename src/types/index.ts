@@ -18,6 +18,7 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  status?: "pending" | "approved" | "rejected";
 }
 
 export interface AuthContextType {
@@ -112,6 +113,8 @@ export interface Peserta {
   email: string;
   hadir: number;
   tugas: number;
+  status?: "pending" | "approved" | "rejected";
+  createdAt?: string;
 }
 
 // ---- Feedback ----
@@ -121,4 +124,31 @@ export interface Feedback {
   feedback: string;
   createdAt: string;
   user?: Pick<User, "name" | "email">;
+}
+
+// ---- Izin / Sakit ----
+
+export type IzinJenis = "izin" | "sakit";
+export type IzinStatus = "pending" | "disetujui" | "ditolak";
+
+export interface Izin {
+  _id: string;
+  tanggal: string;
+  jenis: IzinJenis;
+  keterangan?: string;
+  fileBukti?: string | null;
+  status: IzinStatus;
+  catatanAdmin?: string;
+  createdAt: string;
+  updatedAt: string;
+  user?: Pick<User, "name" | "email"> & { _id?: string };
+}
+
+// ---- Notifikasi Revisi Laporan ----
+
+export interface NotifikasiRevisi {
+  _id: string;
+  judul: string;
+  adminCatatan?: string;
+  createdAt: string;
 }

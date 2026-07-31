@@ -4,7 +4,7 @@
 // ============================================
 
 import axios from "axios";
-import type { LoginRequest, LoginResponse, PaginationMeta } from "@/types";
+import type { LoginRequest, LoginResponse, PaginationMeta, Izin, NotifikasiRevisi } from "@/types";
 
 // ---- Axios Instance ----
 
@@ -91,6 +91,10 @@ export const presensiService = {
     apiClient.post("/presensi/masuk", payload),
   keluar: (payload: { lokasiKeluar?: string }) =>
     apiClient.post("/presensi/keluar", payload),
+  inputManual: (payload: { userId: string; tanggal: string; jamMasuk?: string; jamKeluar?: string; lokasiMasuk?: string; lokasiKeluar?: string }) =>
+    apiClient.post("/presensi/admin/manual", payload),
+  deletePresensi: (id: string) =>
+    apiClient.delete(`/presensi/admin/${id}`),
 };
 
 // ====================
@@ -114,6 +118,10 @@ export const laporanService = {
     apiClient.put(`/laporan/${id}/file`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
+  getNotifikasi: () =>
+    apiClient.get<NotifikasiRevisi[]>("/laporan/notifikasi"),
+  tandaiDibaca: (id: string) =>
+    apiClient.put(`/laporan/${id}/tandai-dibaca`),
 };
 
 // ====================
@@ -136,6 +144,26 @@ export const feedbackService = {
 export const userService = {
   getPesertaList: () => apiClient.get("/users/peserta"),
   getAdminPeserta: () => apiClient.get("/users/admin/peserta"),
+  resetPasswordPeserta: (id: string) =>
+    apiClient.put(`/users/admin/peserta/${id}/reset-password`),
+  updateStatusPeserta: (id: string, status: "approved" | "rejected" | "pending") =>
+    apiClient.put(`/users/admin/peserta/${id}/status`, { status }),
+};
+
+// ====================
+// IZIN / SAKIT SERVICES
+// ====================
+
+export const izinService = {
+  ajukan: (payload: { tanggal: string; jenis: string; keterangan?: string }) =>
+    apiClient.post<{ izin: Izin; msg: string }>("/izin", payload),
+  getMyIzin: (params?: { page?: number; limit?: number }) =>
+    apiClient.get<Izin[]>("/izin", { params }),
+  cancelIzin: (id: string) => apiClient.delete(`/izin/${id}`),
+  getAllIzin: (params?: { page?: number; limit?: number; search?: string; status?: string }) =>
+    apiClient.get<Izin[]>("/izin/admin", { params }),
+  approveIzin: (id: string, payload: { status: "disetujui" | "ditolak"; catatanAdmin?: string }) =>
+    apiClient.put(`/izin/${id}/approve`, payload),
 };
 
 // ====================

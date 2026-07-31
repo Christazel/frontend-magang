@@ -47,12 +47,15 @@ function normalizeId(id: unknown): string | null {
   if (!id) return null;
   if (typeof id === "string") return id;
 
-  if (typeof id === "object") {
+  if (typeof id === "object" && id !== null) {
     const obj = id as Record<string, unknown>;
     if (typeof obj._id === "string") return obj._id;
     if (typeof obj.$oid === "string") return obj.$oid;
-    if (id && typeof (id as any).toString === "function") {
-      const s = (id as any).toString();
+    
+    // Type assertion to an interface with toString
+    const hasToString = id as { toString?: () => string };
+    if (typeof hasToString.toString === "function") {
+      const s = hasToString.toString();
       if (s && s !== "[object Object]") return s;
     }
   }
