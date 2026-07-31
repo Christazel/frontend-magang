@@ -16,9 +16,6 @@ build/
 .env.test.local
 .env.production.local
 
-# Config (contains sensitive or machine-specific settings)
-next.config.ts
-
 # TypeScript build cache
 tsconfig.tsbuildinfo
 *.tsbuildinfo
