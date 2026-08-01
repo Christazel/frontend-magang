@@ -4,11 +4,14 @@ import { useAuth } from "@/hooks/useAuth";
 import Sidebar from "@/components/layout/Sidebar";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { Users, FileText, TrendingUp, Activity } from "lucide-react";
+import { Users, FileText, TrendingUp, Activity, CheckCircle2, Clock, ShieldAlert, ArrowRight, AlertCircle } from "lucide-react";
 import useSWR from "swr";
-import { fetcher } from "@/lib/api";
+import { fetcher, userService } from "@/lib/api";
 import { Card, CardHeader, CardBody, StatCard } from "@/components/ui/Card";
 import type { Peserta, Laporan } from "@/types";
+import Link from "next/link";
+import toast from "react-hot-toast";
+import { useState } from "react";
 
 // Chart.js
 import {
@@ -34,30 +37,41 @@ ChartJS.register(
   Title
 );
 
-// === Konfigurasi keaktifan (sama dengan manajemen peserta) ===
-const TOTAL_HARI = 90; // total hari magang (silakan sesuaikan)
-const TOTAL_TUGAS = 10; // jumlah tugas target
+const TOTAL_HARI = 90;
+const TOTAL_TUGAS = 10;
 
 function hitungKeaktifan(hadir: number, tugas: number): number {
-  const hadirScore = TOTAL_HARI > 0 ? hadir / TOTAL_HARI : 0; // 0..1
-  const tugasScore = TOTAL_TUGAS > 0 ? tugas / TOTAL_TUGAS : 0; // 0..1
-  const avgScore = (hadirScore + tugasScore) / 2; // rata-rata
+  const hadirScore = TOTAL_HARI > 0 ? hadir / TOTAL_HARI : 0;
+  const tugasScore = TOTAL_TUGAS > 0 ? tugas / TOTAL_TUGAS : 0;
+  const avgScore = (hadirScore + tugasScore) / 2;
   const persen = Math.round(avgScore * 100);
-  return Math.min(100, Math.max(0, persen)); // jaga 0–100
+  return Math.min(100, Math.max(0, persen));
 }
 
 export default function AdminDashboard() {
   const { user } = useAuth();
-  const { data: pesertaData, error: errorPeserta, isLoading: loadingPeserta } = useSWR<Peserta[]>("/users/admin/peserta", fetcher);
+  const { data: pesertaData, error: errorPeserta, isLoading: loadingPeserta, mutate: mutatePeserta } = useSWR<Peserta[]>("/users/admin/peserta", fetcher);
   const { data: laporanData, error: errorLaporan, isLoading: loadingLaporan } = useSWR<Laporan[]>("/laporan/admin", fetcher);
 
+  const [approvingId, setApprovingId] = useState<string | null>(null);
+
   const loading = loadingPeserta || loadingLaporan;
-  const error = errorPeserta || errorLaporan ? "Terjadi kesalahan saat mengambil statistik dashboard." : "";
+  const error = errorPeserta || errorLaporan ? "Gagal memuat data analitik dashboard." : "";
 
   const totalInterns = Array.isArray(pesertaData) ? pesertaData.length : 0;
   const reportsSubmitted = Array.isArray(laporanData) ? laporanData.length : 0;
 
-  // hitung rata-rata keaktifan semua peserta
+  // Breakdown status peserta
+  const approvedUsers = Array.isArray(pesertaData) ? pesertaData.filter((p) => (p.status || "approved") === "approved").length : 0;
+  const pendingUsers = Array.isArray(pesertaData) ? pesertaData.filter((p) => p.status === "pending") : [];
+  const rejectedUsers = Array.isArray(pesertaData) ? pesertaData.filter((p) => p.status === "rejected").length : 0;
+
+  // Breakdown status laporan
+  const sesuaiLaporan = Array.isArray(laporanData) ? laporanData.filter((l) => l.status === "sesuai").length : 0;
+  const revisiLaporan = Array.isArray(laporanData) ? laporanData.filter((l) => l.status === "revisi").length : 0;
+  const pendingLaporan = Array.isArray(laporanData) ? laporanData.filter((l) => !l.status || l.status === "pending") : [];
+
+  // Hitung rata-rata keaktifan
   let averageActivity = 0;
   if (totalInterns > 0 && Array.isArray(pesertaData)) {
     const totalPersen = pesertaData.reduce((sum, p) => {
@@ -67,68 +81,87 @@ export default function AdminDashboard() {
     averageActivity = Math.min(100, Math.max(0, averageActivity));
   }
 
-  const stats = {
-    totalInterns,
-    reportsSubmitted,
-    averageActivity,
+  // Quick Approve Akun Peserta
+  const handleQuickApprove = async (p: Peserta) => {
+    setApprovingId(p._id);
+    try {
+      await userService.updateStatusPeserta(p._id, "approved");
+      toast.success(`Akun ${p.name} berhasil disetujui.`);
+      mutatePeserta();
+    } catch {
+      toast.error("Gagal menyetujui akun peserta.");
+    } finally {
+      setApprovingId(null);
+    }
   };
 
-  // Data chart
-  const doughnutData = {
-    labels: ["Peserta Magang", "Laporan Diterima"],
+  // Doughnut 1: Status Laporan Tugas (Konsisten Brand Colors)
+  const laporanDoughnutData = {
+    labels: ["Disetujui", "Perlu Revisi", "Menunggu Review"],
     datasets: [
       {
-        data: [stats.totalInterns, stats.reportsSubmitted],
-        backgroundColor: ["rgba(11, 44, 101, 0.85)", "rgba(37, 99, 235, 0.85)"],
-        borderColor: ["rgba(11, 44, 101, 1)", "rgba(37, 99, 235, 1)"],
-        borderWidth: 2,
-        hoverBackgroundColor: [
-          "rgba(6, 28, 71, 0.95)",
-          "rgba(29, 78, 216, 0.95)",
+        data: [sesuaiLaporan, revisiLaporan, pendingLaporan.length],
+        backgroundColor: [
+          "rgba(11, 44, 101, 0.85)",  // Primary Navy #0b2c65
+          "rgba(244, 63, 94, 0.85)",  // Rose #f43f5e
+          "rgba(245, 158, 11, 0.85)", // Amber #f59e0b
         ],
+        borderColor: [
+          "rgba(11, 44, 101, 1)",
+          "rgba(244, 63, 94, 1)",
+          "rgba(245, 158, 11, 1)",
+        ],
+        borderWidth: 1.5,
       },
     ],
   };
+
+  // Doughnut 2: Status Akun Peserta (Konsisten Brand Colors)
+  const akunDoughnutData = {
+    labels: ["Aktif", "Menunggu Approval", "Ditolak"],
+    datasets: [
+      {
+        data: [approvedUsers, pendingUsers.length, rejectedUsers],
+        backgroundColor: [
+          "rgba(37, 99, 235, 0.85)",  // Blue #2563eb
+          "rgba(245, 158, 11, 0.85)", // Amber #f59e0b
+          "rgba(244, 63, 94, 0.85)",  // Rose #f43f5e
+        ],
+        borderColor: [
+          "rgba(37, 99, 235, 1)",
+          "rgba(245, 158, 11, 1)",
+          "rgba(244, 63, 94, 1)",
+        ],
+        borderWidth: 1.5,
+      },
+    ],
+  };
+
+  // Bar Chart: Top Keaktifan Peserta (Konsisten Brand Colors)
+  const topPeserta = Array.isArray(pesertaData)
+    ? [...pesertaData].sort((a, b) => b.hadir - a.hadir).slice(0, 6)
+    : [];
 
   const barData = {
-    labels: ["Peserta Magang", "Laporan Diterima"],
+    labels: topPeserta.map((p) => p.name.split(" ")[0]),
     datasets: [
       {
-        label: "Jumlah",
-        data: [stats.totalInterns, stats.reportsSubmitted],
-        backgroundColor: ["rgba(11, 44, 101, 0.85)", "rgba(37, 99, 235, 0.85)"],
-        borderColor: ["rgba(11, 44, 101, 1)", "rgba(37, 99, 235, 1)"],
-        borderWidth: 2,
-        borderRadius: 8,
-        hoverBackgroundColor: [
-          "rgba(6, 28, 71, 0.95)",
-          "rgba(29, 78, 216, 0.95)",
-        ],
+        label: "Jumlah Hadir",
+        data: topPeserta.map((p) => p.hadir),
+        backgroundColor: "rgba(11, 44, 101, 0.85)",
+        borderColor: "rgba(11, 44, 101, 1)",
+        borderWidth: 1,
+        borderRadius: 5,
+      },
+      {
+        label: "Jumlah Tugas",
+        data: topPeserta.map((p) => p.tugas),
+        backgroundColor: "rgba(37, 99, 235, 0.85)",
+        borderColor: "rgba(37, 99, 235, 1)",
+        borderWidth: 1,
+        borderRadius: 5,
       },
     ],
-  };
-
-  const barOptions: ChartOptions<"bar"> = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        backgroundColor: "rgba(0, 0, 0, 0.8)",
-        padding: 12,
-        titleFont: { size: 14, weight: "bold" },
-        bodyFont: { size: 13 },
-      },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        grid: { color: "rgba(0, 0, 0, 0.05)" },
-      },
-      x: {
-        grid: { display: false },
-      },
-    },
   };
 
   const doughnutOptions: ChartOptions<"doughnut"> = {
@@ -138,62 +171,79 @@ export default function AdminDashboard() {
       legend: {
         position: "bottom",
         labels: {
-          padding: 20,
-          font: { size: 13 },
+          padding: 14,
+          font: { size: 11 },
           usePointStyle: true,
           pointStyle: "circle",
         },
       },
       tooltip: {
-        backgroundColor: "rgba(0, 0, 0, 0.8)",
-        padding: 12,
-        titleFont: { size: 14, weight: "bold" },
-        bodyFont: { size: 13 },
+        backgroundColor: "rgba(11, 44, 101, 0.95)",
+        padding: 10,
+        titleFont: { size: 12, weight: "bold" },
+        bodyFont: { size: 11 },
       },
+    },
+  };
+
+  const barOptions: ChartOptions<"bar"> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "top",
+        labels: { font: { size: 11 }, usePointStyle: true },
+      },
+      tooltip: {
+        backgroundColor: "rgba(11, 44, 101, 0.95)",
+        padding: 10,
+        titleFont: { size: 12, weight: "bold" },
+        bodyFont: { size: 11 },
+      },
+    },
+    scales: {
+      y: { beginAtZero: true, grid: { color: "rgba(0, 0, 0, 0.04)" }, ticks: { font: { size: 11 } } },
+      x: { grid: { display: false }, ticks: { font: { size: 11 } } },
     },
   };
 
   return (
     <div className="flex min-h-screen bg-gray-50/50">
       <Sidebar />
-      <div className="flex-1 md:ml-64 flex flex-col">
+      <div className="flex-1 md:ml-64 flex flex-col min-w-0">
         <Navbar />
-        <main className="flex-1 px-4 sm:px-6 lg:px-8 py-8 w-full max-w-7xl mx-auto">
-          <div className="space-y-6">
-            {/* Welcome Section */}
+        <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 w-full max-w-7xl mx-auto">
+          <div className="space-y-5">
+            
+            {/* Signature Brand Welcome Banner (#0b2c65 -> #1e3a8a) */}
             <div
-              className="relative overflow-hidden rounded-2xl p-8 shadow-lg"
+              className="relative overflow-hidden rounded-2xl p-6 sm:p-7 shadow-md border border-blue-900/20"
               style={{
                 background: "linear-gradient(135deg, #0b2c65 0%, #1e3a8a 100%)",
               }}
             >
-              {/* Background Decoration */}
               <div
-                className="absolute -right-10 -top-10 w-64 h-64 rounded-full blur-3xl opacity-20 pointer-events-none"
+                className="absolute -right-8 -top-8 w-48 h-48 rounded-full blur-2xl opacity-20 pointer-events-none"
                 style={{ background: "#60a5fa" }}
               />
-              <div
-                className="absolute -bottom-10 right-20 w-48 h-48 rounded-full blur-2xl opacity-20 pointer-events-none"
-                style={{ background: "#93c5fd" }}
-              />
-
+              
               <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="p-2.5 bg-white/10 rounded-xl backdrop-blur-md border border-white/20">
-                      <Activity className="w-6 h-6 text-blue-100" />
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 bg-white/10 rounded-lg backdrop-blur-sm border border-white/15">
+                      <Activity className="w-5 h-5 text-blue-100" />
                     </div>
-                    <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
-                      Selamat Datang, {user?.name || "Admin"}!
+                    <h1 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+                      Selamat Datang, {user?.name || "Admin"}
                     </h1>
                   </div>
-                  <p className="text-blue-100/90 md:ml-[3.25rem] text-sm leading-relaxed max-w-xl">
-                    Pantau aktivitas dan perkembangan seluruh peserta magang Anda
-                    melalui dashboard analitik terpusat ini.
+                  <p className="text-blue-100/90 text-xs sm:text-sm leading-relaxed max-w-xl md:ml-9">
+                    Ringkasan statistik kehadiran, verifikasi peserta, dan evaluasi laporan tugas magang.
                   </p>
                 </div>
+                
                 <div className="shrink-0 md:self-end">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white text-xs font-semibold tracking-wide uppercase backdrop-blur-md">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-white/10 border border-white/20 text-white text-xs font-medium tracking-wide backdrop-blur-sm">
                     <span className="w-1.5 h-1.5 rounded-full bg-blue-300 animate-pulse" />
                     Role: {user?.role}
                   </span>
@@ -201,65 +251,125 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Error / Loading */}
+            {/* Error State */}
             {error && (
-              <div className="bg-rose-50 border border-rose-200 text-rose-700 px-6 py-4 rounded-xl shadow-sm flex items-start gap-3">
-                <span className="text-xl">⚠️</span>
-                <span className="font-medium text-sm mt-0.5">{error}</span>
+              <div className="bg-rose-50 border border-rose-200 text-rose-700 px-4 py-3 rounded-xl shadow-xs flex items-center gap-2 text-xs font-medium">
+                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                <span>{error}</span>
               </div>
             )}
+
+            {/* Loading State */}
             {loading && (
-              <Card glass className="p-10 flex flex-col items-center justify-center gap-4 border-dashed border-2 border-blue-200 bg-blue-50/30">
-                <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                <span className="text-blue-700 font-semibold text-sm">
-                  Menyiapkan data dashboard...
+              <Card glass className="p-8 flex flex-col items-center justify-center gap-3 border-dashed border-2 border-blue-200 bg-blue-50/20">
+                <div className="w-6 h-6 border-3 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                <span className="text-blue-700 font-medium text-xs">
+                  Memuat statistik analitik...
                 </span>
               </Card>
             )}
 
-            {/* Stat Cards & Charts */}
+            {/* Main Content */}
             {!loading && !error && (
               <>
-                {/* Metrics */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                {/* 4 Metrics Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <StatCard
-                    label="Total Peserta"
-                    value={stats.totalInterns}
-                    icon={<Users className="w-6 h-6" />}
+                    label="Total Peserta Magang"
+                    value={totalInterns}
+                    icon={<Users className="w-5 h-5 text-blue-700" />}
                     color="teal"
                   />
                   <StatCard
+                    label="Menunggu Approval"
+                    value={pendingUsers.length}
+                    icon={<Clock className="w-5 h-5 text-amber-600" />}
+                    color="amber"
+                  />
+                  <StatCard
                     label="Laporan Diterima"
-                    value={stats.reportsSubmitted}
-                    icon={<FileText className="w-6 h-6" />}
+                    value={reportsSubmitted}
+                    icon={<FileText className="w-5 h-5 text-blue-600" />}
                     color="blue"
                   />
                   <StatCard
                     label="Rata-rata Keaktifan"
-                    value={`${stats.totalInterns > 0 ? stats.averageActivity : 0}%`}
-                    icon={<TrendingUp className="w-6 h-6" />}
-                    color="amber"
+                    value={`${averageActivity}%`}
+                    icon={<TrendingUp className="w-5 h-5 text-blue-700" />}
+                    color="teal"
                   />
                 </div>
 
-                {/* Charts */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                  <Card hoverable className="flex flex-col">
-                    <CardHeader title="Komposisi Data" subtitle="Perbandingan peserta dan laporan" />
-                    <CardBody className="flex-1 flex items-center justify-center min-h-[300px]">
-                      <div className="w-full h-full max-h-[300px] relative">
-                        <Doughnut data={doughnutData} options={doughnutOptions} />
+                {/* Action Widget: Pending Approval */}
+                {pendingUsers.length > 0 && (
+                  <div className="bg-amber-50/70 border border-amber-200/80 rounded-xl p-4 shadow-xs space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-amber-900 font-semibold text-xs sm:text-sm">
+                        <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0" />
+                        <span>Verifikasi Akun Baru ({pendingUsers.length} Menunggu Persetujuan)</span>
+                      </div>
+                      <Link
+                        href="/dashboard/admin/manajemen-peserta"
+                        className="text-xs font-semibold text-amber-700 hover:text-amber-900 flex items-center gap-1 hover:underline"
+                      >
+                        Lihat Semua <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                      {pendingUsers.slice(0, 3).map((p) => (
+                        <div key={p._id} className="bg-white p-3 rounded-lg border border-amber-100 flex items-center justify-between shadow-xs">
+                          <div className="min-w-0 pr-2">
+                            <p className="text-xs font-semibold text-gray-900 truncate">{p.name}</p>
+                            <p className="text-[11px] text-gray-500 truncate">{p.email}</p>
+                          </div>
+                          <button
+                            onClick={() => handleQuickApprove(p)}
+                            disabled={approvingId === p._id}
+                            className="shrink-0 px-2.5 py-1 text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-md transition-colors flex items-center gap-1 disabled:opacity-50"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            Setujui
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 3 Interactive Charts */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  
+                  {/* Chart 1: Status Laporan */}
+                  <Card hoverable className="flex flex-col border border-gray-100">
+                    <CardHeader title="Status Laporan Tugas" subtitle="Distribusi review dokumen" />
+                    <CardBody className="flex-1 flex items-center justify-center min-h-[240px] p-3">
+                      <div className="w-full h-full max-h-[240px] relative">
+                        <Doughnut data={laporanDoughnutData} options={doughnutOptions} />
                       </div>
                     </CardBody>
                   </Card>
-                  <Card hoverable className="flex flex-col">
-                    <CardHeader title="Grafik Statistik" subtitle="Volume data dalam angka" />
-                    <CardBody className="flex-1 flex items-center justify-center min-h-[300px]">
-                      <div className="w-full h-full max-h-[300px] relative">
+
+                  {/* Chart 2: Status Akun Peserta */}
+                  <Card hoverable className="flex flex-col border border-gray-100">
+                    <CardHeader title="Status Persetujuan Akun" subtitle="Distribusi pendaftaran peserta" />
+                    <CardBody className="flex-1 flex items-center justify-center min-h-[240px] p-3">
+                      <div className="w-full h-full max-h-[240px] relative">
+                        <Doughnut data={akunDoughnutData} options={doughnutOptions} />
+                      </div>
+                    </CardBody>
+                  </Card>
+
+                  {/* Chart 3: Top Keaktifan */}
+                  <Card hoverable className="flex flex-col border border-gray-100">
+                    <CardHeader title="Ringkasan Keaktifan" subtitle="Perbandingan kehadiran & tugas" />
+                    <CardBody className="flex-1 flex items-center justify-center min-h-[240px] p-3">
+                      <div className="w-full h-full max-h-[240px] relative">
                         <Bar data={barData} options={barOptions} />
                       </div>
                     </CardBody>
                   </Card>
+
                 </div>
               </>
             )}
