@@ -95,19 +95,19 @@ export default function AdminDashboard() {
     }
   };
 
-  // Doughnut 1: Status Laporan Tugas
+  // Doughnut 1: Status Laporan Tugas (Konsisten Brand Colors)
   const laporanDoughnutData = {
     labels: ["Disetujui", "Perlu Revisi", "Menunggu Review"],
     datasets: [
       {
         data: [sesuaiLaporan, revisiLaporan, pendingLaporan.length],
         backgroundColor: [
-          "rgba(16, 185, 129, 0.85)", // Emerald
-          "rgba(244, 63, 94, 0.85)",  // Rose
-          "rgba(245, 158, 11, 0.85)", // Amber
+          "rgba(11, 44, 101, 0.85)",  // Primary Navy #0b2c65
+          "rgba(244, 63, 94, 0.85)",  // Rose #f43f5e
+          "rgba(245, 158, 11, 0.85)", // Amber #f59e0b
         ],
         borderColor: [
-          "rgba(16, 185, 129, 1)",
+          "rgba(11, 44, 101, 1)",
           "rgba(244, 63, 94, 1)",
           "rgba(245, 158, 11, 1)",
         ],
@@ -116,16 +116,16 @@ export default function AdminDashboard() {
     ],
   };
 
-  // Doughnut 2: Status Akun Peserta
+  // Doughnut 2: Status Akun Peserta (Konsisten Brand Colors)
   const akunDoughnutData = {
     labels: ["Aktif", "Menunggu Approval", "Ditolak"],
     datasets: [
       {
         data: [approvedUsers, pendingUsers.length, rejectedUsers],
         backgroundColor: [
-          "rgba(37, 99, 235, 0.85)",  // Blue
-          "rgba(245, 158, 11, 0.85)", // Amber
-          "rgba(244, 63, 94, 0.85)",  // Rose
+          "rgba(37, 99, 235, 0.85)",  // Blue #2563eb
+          "rgba(245, 158, 11, 0.85)", // Amber #f59e0b
+          "rgba(244, 63, 94, 0.85)",  // Rose #f43f5e
         ],
         borderColor: [
           "rgba(37, 99, 235, 1)",
@@ -137,7 +137,7 @@ export default function AdminDashboard() {
     ],
   };
 
-  // Bar Chart: Top Keaktifan Peserta
+  // Bar Chart: Top Keaktifan Peserta (Konsisten Brand Colors)
   const topPeserta = Array.isArray(pesertaData)
     ? [...pesertaData].sort((a, b) => b.hadir - a.hadir).slice(0, 6)
     : [];
@@ -148,16 +148,16 @@ export default function AdminDashboard() {
       {
         label: "Jumlah Hadir",
         data: topPeserta.map((p) => p.hadir),
-        backgroundColor: "rgba(37, 99, 235, 0.85)",
-        borderColor: "rgba(37, 99, 235, 1)",
+        backgroundColor: "rgba(11, 44, 101, 0.85)",
+        borderColor: "rgba(11, 44, 101, 1)",
         borderWidth: 1,
         borderRadius: 5,
       },
       {
         label: "Jumlah Tugas",
         data: topPeserta.map((p) => p.tugas),
-        backgroundColor: "rgba(245, 158, 11, 0.85)",
-        borderColor: "rgba(245, 158, 11, 1)",
+        backgroundColor: "rgba(37, 99, 235, 0.85)",
+        borderColor: "rgba(37, 99, 235, 1)",
         borderWidth: 1,
         borderRadius: 5,
       },
@@ -178,7 +178,7 @@ export default function AdminDashboard() {
         },
       },
       tooltip: {
-        backgroundColor: "rgba(15, 23, 42, 0.9)",
+        backgroundColor: "rgba(11, 44, 101, 0.95)",
         padding: 10,
         titleFont: { size: 12, weight: "bold" },
         bodyFont: { size: 11 },
@@ -195,7 +195,7 @@ export default function AdminDashboard() {
         labels: { font: { size: 11 }, usePointStyle: true },
       },
       tooltip: {
-        backgroundColor: "rgba(15, 23, 42, 0.9)",
+        backgroundColor: "rgba(11, 44, 101, 0.95)",
         padding: 10,
         titleFont: { size: 12, weight: "bold" },
         bodyFont: { size: 11 },
@@ -215,28 +215,36 @@ export default function AdminDashboard() {
         <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 w-full max-w-7xl mx-auto">
           <div className="space-y-5">
             
-            {/* Sleek Modern Welcome Banner */}
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 sm:p-7 shadow-md border border-slate-800">
-              <div className="absolute -right-8 -top-8 w-48 h-48 rounded-full bg-blue-500/10 blur-2xl pointer-events-none" />
+            {/* Signature Brand Welcome Banner (#0b2c65 -> #1e3a8a) */}
+            <div
+              className="relative overflow-hidden rounded-2xl p-6 sm:p-7 shadow-md border border-blue-900/20"
+              style={{
+                background: "linear-gradient(135deg, #0b2c65 0%, #1e3a8a 100%)",
+              }}
+            >
+              <div
+                className="absolute -right-8 -top-8 w-48 h-48 rounded-full blur-2xl opacity-20 pointer-events-none"
+                style={{ background: "#60a5fa" }}
+              />
               
               <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2.5">
-                    <div className="p-2 bg-white/10 rounded-lg backdrop-blur-sm border border-white/10">
-                      <Activity className="w-5 h-5 text-blue-200" />
+                    <div className="p-2 bg-white/10 rounded-lg backdrop-blur-sm border border-white/15">
+                      <Activity className="w-5 h-5 text-blue-100" />
                     </div>
                     <h1 className="text-lg sm:text-xl font-bold text-white tracking-tight">
                       Selamat Datang, {user?.name || "Admin"}
                     </h1>
                   </div>
-                  <p className="text-slate-300 text-xs sm:text-sm leading-relaxed max-w-xl md:ml-9">
+                  <p className="text-blue-100/90 text-xs sm:text-sm leading-relaxed max-w-xl md:ml-9">
                     Ringkasan statistik kehadiran, verifikasi peserta, dan evaluasi laporan tugas magang.
                   </p>
                 </div>
                 
                 <div className="shrink-0 md:self-end">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-white/10 border border-white/15 text-slate-200 text-xs font-medium tracking-wide backdrop-blur-sm">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-white/10 border border-white/20 text-white text-xs font-medium tracking-wide backdrop-blur-sm">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-300 animate-pulse" />
                     Role: {user?.role}
                   </span>
                 </div>
@@ -269,7 +277,7 @@ export default function AdminDashboard() {
                   <StatCard
                     label="Total Peserta Magang"
                     value={totalInterns}
-                    icon={<Users className="w-5 h-5 text-teal-600" />}
+                    icon={<Users className="w-5 h-5 text-blue-700" />}
                     color="teal"
                   />
                   <StatCard
@@ -287,7 +295,7 @@ export default function AdminDashboard() {
                   <StatCard
                     label="Rata-rata Keaktifan"
                     value={`${averageActivity}%`}
-                    icon={<TrendingUp className="w-5 h-5 text-emerald-600" />}
+                    icon={<TrendingUp className="w-5 h-5 text-blue-700" />}
                     color="teal"
                   />
                 </div>
@@ -312,8 +320,8 @@ export default function AdminDashboard() {
                       {pendingUsers.slice(0, 3).map((p) => (
                         <div key={p._id} className="bg-white p-3 rounded-lg border border-amber-100 flex items-center justify-between shadow-xs">
                           <div className="min-w-0 pr-2">
-                            <p className="text-xs font-semibold text-slate-900 truncate">{p.name}</p>
-                            <p className="text-[11px] text-slate-500 truncate">{p.email}</p>
+                            <p className="text-xs font-semibold text-gray-900 truncate">{p.name}</p>
+                            <p className="text-[11px] text-gray-500 truncate">{p.email}</p>
                           </div>
                           <button
                             onClick={() => handleQuickApprove(p)}

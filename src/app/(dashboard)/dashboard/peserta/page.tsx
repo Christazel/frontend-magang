@@ -93,20 +93,20 @@ export default function PesertaDashboard() {
 
   const sisaHari = Math.max(0, TOTAL_HARI - stats.hadir - stats.izin - stats.sakit);
 
-  // Doughnut 1: Presensi & Izin Breakdown
+  // Doughnut 1: Presensi & Izin Breakdown (Konsisten Brand Colors)
   const doughnutData = {
     labels: ["Hadir", "Izin", "Sakit", "Sisa Hari"],
     datasets: [
       {
         data: [stats.hadir, stats.izin, stats.sakit, sisaHari],
         backgroundColor: [
-          "rgba(16, 185, 129, 0.85)", // Emerald
-          "rgba(59, 130, 246, 0.85)",  // Blue
-          "rgba(245, 158, 11, 0.85)", // Amber
-          "rgba(229, 231, 235, 0.8)", // Gray
+          "rgba(11, 44, 101, 0.85)",  // Primary Navy #0b2c65
+          "rgba(59, 130, 246, 0.85)",  // Blue #3b82f6
+          "rgba(245, 158, 11, 0.85)", // Amber #f59e0b
+          "rgba(229, 231, 235, 0.8)", // Gray #e5e7eb
         ],
         borderColor: [
-          "rgba(16, 185, 129, 1)",
+          "rgba(11, 44, 101, 1)",
           "rgba(59, 130, 246, 1)",
           "rgba(245, 158, 11, 1)",
           "rgba(209, 213, 219, 1)",
@@ -116,7 +116,7 @@ export default function PesertaDashboard() {
     ],
   };
 
-  // Bar 2: Status Laporan Tugas Saya
+  // Bar 2: Status Laporan Tugas Saya (Konsisten Brand Colors)
   const barData = {
     labels: ["Disetujui", "Perlu Revisi", "Menunggu Review"],
     datasets: [
@@ -124,12 +124,12 @@ export default function PesertaDashboard() {
         label: "Jumlah Laporan",
         data: [laporanStats.sesuai, laporanStats.revisi, laporanStats.pending],
         backgroundColor: [
-          "rgba(16, 185, 129, 0.85)", // Emerald
-          "rgba(244, 63, 94, 0.85)",  // Rose
-          "rgba(245, 158, 11, 0.85)", // Amber
+          "rgba(11, 44, 101, 0.85)",  // Primary Navy #0b2c65
+          "rgba(244, 63, 94, 0.85)",  // Rose #f43f5e
+          "rgba(245, 158, 11, 0.85)", // Amber #f59e0b
         ],
         borderColor: [
-          "rgba(16, 185, 129, 1)",
+          "rgba(11, 44, 101, 1)",
           "rgba(244, 63, 94, 1)",
           "rgba(245, 158, 11, 1)",
         ],
@@ -145,7 +145,7 @@ export default function PesertaDashboard() {
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: "rgba(15, 23, 42, 0.9)",
+        backgroundColor: "rgba(11, 44, 101, 0.95)",
         padding: 10,
         titleFont: { size: 12, weight: "bold" },
         bodyFont: { size: 11 },
@@ -171,7 +171,7 @@ export default function PesertaDashboard() {
         },
       },
       tooltip: {
-        backgroundColor: "rgba(15, 23, 42, 0.9)",
+        backgroundColor: "rgba(11, 44, 101, 0.95)",
         padding: 10,
         titleFont: { size: 12, weight: "bold" },
         bodyFont: { size: 11 },
@@ -189,28 +189,36 @@ export default function PesertaDashboard() {
         <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 w-full max-w-7xl mx-auto">
           <div className="space-y-5">
             
-            {/* Sleek Modern Welcome Banner */}
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 sm:p-7 shadow-md border border-slate-800">
-              <div className="absolute -right-8 -top-8 w-48 h-48 rounded-full bg-teal-500/10 blur-2xl pointer-events-none" />
+            {/* Signature Brand Welcome Banner (#0b2c65 -> #1e3a8a) */}
+            <div
+              className="relative overflow-hidden rounded-2xl p-6 sm:p-7 shadow-md border border-blue-900/20"
+              style={{
+                background: "linear-gradient(135deg, #0b2c65 0%, #1e3a8a 100%)",
+              }}
+            >
+              <div
+                className="absolute -right-8 -top-8 w-48 h-48 rounded-full blur-2xl opacity-20 pointer-events-none"
+                style={{ background: "#60a5fa" }}
+              />
               
               <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2.5">
-                    <div className="p-2 bg-white/10 rounded-lg backdrop-blur-sm border border-white/10">
-                      <Activity className="w-5 h-5 text-teal-200" />
+                    <div className="p-2 bg-white/10 rounded-lg backdrop-blur-sm border border-white/15">
+                      <Activity className="w-5 h-5 text-blue-100" />
                     </div>
                     <h1 className="text-lg sm:text-xl font-bold text-white tracking-tight">
                       Selamat Datang, {user?.name || "Peserta"}
                     </h1>
                   </div>
-                  <p className="text-slate-300 text-xs sm:text-sm leading-relaxed max-w-xl md:ml-9">
+                  <p className="text-blue-100/90 text-xs sm:text-sm leading-relaxed max-w-xl md:ml-9">
                     Pantau tingkat kehadiran, pengajuan izin, dan riwayat laporan magang Anda.
                   </p>
                 </div>
                 
                 <div className="shrink-0 md:self-end">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-white/10 border border-white/15 text-slate-200 text-xs font-medium tracking-wide backdrop-blur-sm">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-white/10 border border-white/20 text-white text-xs font-medium tracking-wide backdrop-blur-sm">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-300 animate-pulse" />
                     Role: {user?.role}
                   </span>
                 </div>
@@ -270,7 +278,7 @@ export default function PesertaDashboard() {
                   <StatCard
                     label="Total Kehadiran"
                     value={`${stats.hadir} Hari`}
-                    icon={<CheckCircle className="w-5 h-5 text-emerald-600" />}
+                    icon={<CheckCircle className="w-5 h-5 text-blue-700" />}
                     color="teal"
                   />
                   <StatCard
@@ -288,7 +296,7 @@ export default function PesertaDashboard() {
                   <StatCard
                     label="Laporan Disetujui"
                     value={`${laporanStats.sesuai} Dokumen`}
-                    icon={<FileText className="w-5 h-5 text-emerald-600" />}
+                    icon={<FileText className="w-5 h-5 text-blue-700" />}
                     color="teal"
                   />
                 </div>
