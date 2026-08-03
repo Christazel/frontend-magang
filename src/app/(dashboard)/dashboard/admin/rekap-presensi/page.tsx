@@ -16,8 +16,10 @@ import {
   PencilSquareIcon,
   TrashIcon,
   XMarkIcon,
+  ArrowDownTrayIcon,
 } from "@heroicons/react/24/outline";
 import { presensiService, userService, getErrorMessage, parsePaginationHeaders } from "@/lib/api";
+import { exportPresensiToExcel, type PresensiExportRow } from "@/lib/exportExcel";
 import type { Presensi } from "@/types";
 import toast from "react-hot-toast";
 
@@ -169,6 +171,31 @@ export default function RekapPresensiPage() {
 
   const grouped = groupByUser(data);
 
+  // Export semua data yang sedang tampil ke Excel (CSV)
+  const handleExportExcel = () => {
+    if (data.length === 0) {
+      toast.error("Tidak ada data untuk diekspor.");
+      return;
+    }
+    const rows: PresensiExportRow[] = data.map((p) => ({
+      nama: (p.user as { name?: string } | undefined)?.name || "-",
+      email: (p.user as { email?: string } | undefined)?.email || "-",
+      tanggal: p.tanggal
+        ? new Date(p.tanggal).toLocaleDateString("id-ID", {
+            day: "2-digit",
+            month: "long",
+            year: "numeric",
+          })
+        : "-",
+      jamMasuk: p.jamMasuk || "-",
+      lokasiMasuk: p.lokasiMasuk || "-",
+      jamKeluar: p.jamKeluar || "-",
+      lokasiKeluar: p.lokasiKeluar || "-",
+    }));
+    exportPresensiToExcel(rows);
+    toast.success(`${rows.length} data berhasil diekspor ke Excel.`);
+  };
+
   return (
     <div className="flex min-h-screen bg-gray-50/50 overflow-x-hidden">
       <Sidebar />
@@ -195,7 +222,15 @@ export default function RekapPresensiPage() {
                 </div>
               </div>
               
-              <div className="flex items-center gap-2 self-start sm:self-auto">
+              <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+                <button
+                  onClick={handleExportExcel}
+                  disabled={loading || data.length === 0}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-semibold rounded-xl shadow-sm transition-colors"
+                >
+                  <ArrowDownTrayIcon className="w-4 h-4" />
+                  Export Excel
+                </button>
                 <button
                   onClick={openCreateModal}
                   className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-xl shadow-sm transition-colors"

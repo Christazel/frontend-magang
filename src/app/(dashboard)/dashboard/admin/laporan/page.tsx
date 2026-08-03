@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/Input";
 import { Pagination } from "@/components/ui/Pagination";
 import { DocumentTextIcon, ArrowPathIcon, DocumentArrowDownIcon, CheckBadgeIcon } from "@heroicons/react/24/outline";
 import { laporanService, getErrorMessage, parsePaginationHeaders } from "@/lib/api";
+import { exportLaporanToExcel } from "@/lib/exportExcel";
 import type { Laporan, ReviewStatus, SortOption } from "@/types";
 
 const fmtTanggal = (iso: string) =>
@@ -27,11 +28,6 @@ const toDateInputValue = (d: Date) => {
   return `${yyyy}-${mm}-${dd}`;
 };
 
-const csvEscape = (v: unknown) => {
-  const s = (v ?? "").toString();
-  if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
-  return s;
-};
 
 function normalizeFileId(fileId: unknown): string | null {
   if (!fileId) return null;
@@ -246,27 +242,26 @@ export default function RekapLaporanAdminPage() {
   };
 
   const exportCSV = () => {
-    const header = ["Nama", "Email", "Judul", "Deskripsi", "Tanggal Upload", "Status", "Catatan Admin"];
-    const rows = filtered.map((x) => [
-      csvEscape(x.user?.name),
-      csvEscape(x.user?.email),
-      csvEscape(x.judul),
-      csvEscape(x.deskripsi),
-      csvEscape(fmtTanggal(x.createdAt)),
-      csvEscape(x.status ?? "pending"),
-      csvEscape(x.adminCatatan ?? ""),
-    ]);
-    const csv = [header, ...rows].map((r) => r.join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `rekap_laporan_${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-    toast.success("CSV berhasil diekspor.");
+    if (filtered.length === 0) {
+      toast.error("Tidak ada data untuk diekspor.");
+      return;
+    }
+    exportLaporanToExcel(
+      filtered.map((x) => ({
+        nama: x.user?.name || "-",
+        email: x.user?.email || "-",
+        judul: x.judul || "-",
+        tanggal: fmtTanggal(x.createdAt),
+        status:
+          x.status === "sesuai"
+            ? "Sesuai"
+            : x.status === "revisi"
+            ? "Perlu Revisi"
+            : "Menunggu Review",
+        catatan: x.adminCatatan || "-",
+      }))
+    );
+    toast.success(`${filtered.length} laporan berhasil diekspor ke Excel.`);
   };
 
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
